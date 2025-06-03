@@ -157,7 +157,7 @@ const SentinelAI: React.FC = () => {
         {Object.entries(agent.status.metrics).map(([key, value]) => (
           <div key={key} className="flex justify-between">
             <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-            <span className="font-medium text-gray-100">{value}</span>
+            <span className="font-medium text-gray-100">{String(value)}</span>
           </div>
         ))}
       </div>

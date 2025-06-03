@@ -7,7 +7,7 @@ export interface WeatherData {
   humidity: number;
   alerts: WeatherAlert[];
   forecast: WeatherForecast[];
-  airQuality?: AirQualityData;
+  airQuality?: AirQualityData | null;
 }
 
 export interface WeatherAlert {
@@ -151,7 +151,7 @@ export class WeatherService {
         heatIndex: this.calculateHeatIndex(period.temperature, 65),
         probabilityOfPrecipitation: 0
       })),
-      airQuality
+      airQuality: airQuality || undefined
     };
   }
 
