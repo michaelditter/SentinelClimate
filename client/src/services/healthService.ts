@@ -40,6 +40,7 @@ export interface HealthSurveillanceData {
 export class HealthService {
   private readonly cdcBaseUrl = 'https://ephtracking.cdc.gov/apigateway/api/v1';
   private readonly userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
+  private readonly cdcApiKey = import.meta.env.VITE_CDC_API_KEY;
 
   async getHeatHealthData(fipsCode: string, startDate: string, endDate: string): Promise<HealthSurveillanceData | null> {
     try {
