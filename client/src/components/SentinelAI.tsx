@@ -96,6 +96,77 @@ const SentinelAI: React.FC = () => {
     }
   };
 
+  const handleEmergencyCall = async (agentType: string, message: string) => {
+    try {
+      const response = await fetch('/api/emergency-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phoneNumber: '+15551234567', // Emergency coordinator
+          message: message,
+          agentType: agentType,
+          severity: 'CRITICAL'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate emergency call');
+      }
+
+      const result = await response.json();
+      console.log('Emergency call initiated:', result);
+      
+      // Add to activity feed
+      const newActivity = {
+        time: new Date().toLocaleTimeString(),
+        agent: agentType,
+        message: `Emergency call initiated: ${message}`,
+        icon: '📞'
+      };
+      setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+
+    } catch (error) {
+      console.error('Emergency call error:', error);
+    }
+  };
+
+  const handleEmergencySMS = async (agentType: string, message: string) => {
+    try {
+      const response = await fetch('/api/emergency-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phoneNumber: '+15551234567',
+          message: message,
+          agentType: agentType
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send emergency SMS');
+      }
+
+      const result = await response.json();
+      console.log('Emergency SMS sent:', result);
+      
+      // Add to activity feed
+      const newActivity = {
+        time: new Date().toLocaleTimeString(),
+        agent: agentType,
+        message: `SMS alert sent: ${message}`,
+        icon: '📱'
+      };
+      setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+
+    } catch (error) {
+      console.error('Emergency SMS error:', error);
+    }
+  };
+
   const getAlertColor = (level: string) => {
     switch (level) {
       case 'EXTREME': return 'bg-red-600 border-red-400';
