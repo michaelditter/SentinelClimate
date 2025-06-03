@@ -36,6 +36,7 @@ import ScenarioGenerator from './simulation/ScenarioGenerator';
 import BeforeAfterComparison from './simulation/BeforeAfterComparison';
 import EconomicCalculator from './simulation/EconomicCalculator';
 import CountyDeepDive from './CountyDeepDive';
+import RealTimeKPIs from './RealTimeKPIs';
 
 // Data and hooks
 import { counties, resourceDeployments } from '@/data/geoData';
