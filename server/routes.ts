@@ -12,7 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Latitude and longitude are required' });
       }
 
-      const nwsApiKey = process.env.NWS_API_KEY;
+      const nwsToken = '***REMOVED-NOAA-TOKEN***';
       const userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
       
       // Get weather data from National Weather Service
@@ -21,7 +21,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           headers: {
             'User-Agent': userAgent,
-            ...(nwsApiKey && { 'Authorization': `Bearer ${nwsApiKey}` })
+            'token': nwsToken
           }
         }
       );
@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const forecastResponse = await fetch(pointData.properties.forecast, {
         headers: {
           'User-Agent': userAgent,
-          ...(nwsApiKey && { 'Authorization': `Bearer ${nwsApiKey}` })
+          'token': nwsToken
         }
       });
 
