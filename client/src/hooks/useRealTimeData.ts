@@ -8,32 +8,34 @@ export const useRealTimeData = (isActive: boolean = true) => {
   useEffect(() => {
     if (!isActive) return;
 
-    // Initialize with static demonstration data to prevent API errors
-    setConnectionStatus('connected');
-    setData({
-      timestamp: new Date(),
-      weather: {},
-      health: {},
-      powerGrid: {
-        systemLoad: 45000,
-        totalCapacity: 85000,
-        reserveMargin: 25.5,
-        demandForecast: 52000,
-        outageCapacity: 2100,
-        renewableGeneration: { wind: 8500, solar: 2800, total: 11300 },
-        gridStability: 'Normal' as const,
-        emergencyLevel: 1
-      },
-      alerts: [],
-      kpiData: {
-        livesSaved: 12,
-        savingsThisMonth: 47.2,
-        systemsProtected: 156,
-        avgResponseTime: 2.3
-      },
-      agentStatus: {}
-    });
+    let unsubscribe: (() => void) | null = null;
 
+    const initializeData = async () => {
+      try {
+        setConnectionStatus('connected');
+        
+        // Start real-time updates with authentic government data
+        await dataIntegrationService.startRealTimeUpdates();
+        
+        // Subscribe to data updates
+        unsubscribe = dataIntegrationService.subscribe((newData) => {
+          setData(newData);
+        });
+        
+      } catch (error) {
+        console.error('Real-time data initialization failed:', error);
+        setConnectionStatus('error');
+      }
+    };
+
+    initializeData();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      dataIntegrationService.stopRealTimeUpdates();
+    };
   }, [isActive]);
 
   const updateData = useCallback(() => {
