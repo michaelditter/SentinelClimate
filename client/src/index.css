@@ -156,3 +156,13 @@
   width: 100%;
   background: #1f2937;
 }
+
+.leaflet-popup-content-wrapper {
+  background: #1f2937;
+  color: #f9fafb;
+  border-radius: 8px;
+}
+
+.leaflet-popup-tip {
+  background: #1f2937;
+}
