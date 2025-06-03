@@ -46,43 +46,18 @@ export class WeatherService {
 
   async getCurrentConditions(latitude: number, longitude: number): Promise<WeatherData> {
     try {
-      // Get grid point for coordinates
-      const gridResponse = await fetch(`${this.nwsBaseUrl}/points/${latitude},${longitude}`, {
-        headers: { 'User-Agent': this.userAgent }
-      });
-      
-      if (!gridResponse.ok) {
-        throw new Error(`Grid API error: ${gridResponse.status}`);
+      // Use server-side proxy endpoint for authentic NOAA weather data
+      const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}`);
+
+      if (!response.ok) {
+        throw new Error(`Weather proxy API error: ${response.status}`);
       }
 
-      const gridData = await gridResponse.json();
-      const { gridX, gridY, gridId } = gridData.properties;
-
-      // Get current observations and forecast
-      const [forecastResponse, airQualityData] = await Promise.all([
-        fetch(`${this.nwsBaseUrl}/gridpoints/${gridId}/${gridX},${gridY}/forecast`, {
-          headers: { 'User-Agent': this.userAgent }
-        }),
-        this.getAirQuality(latitude, longitude)
-      ]);
-
-      if (!forecastResponse.ok) {
-        throw new Error(`Forecast API error: ${forecastResponse.status}`);
-      }
-
-      const forecastData = await forecastResponse.json();
+      const data = await response.json();
       
-      // Get alerts for the area
-      const alertsResponse = await fetch(`${this.nwsBaseUrl}/alerts/active?point=${latitude},${longitude}`, {
-        headers: { 'User-Agent': this.userAgent }
-      });
-
-      const alertsData = alertsResponse.ok ? await alertsResponse.json() : { features: [] };
-
-      return this.parseWeatherData(forecastData, alertsData, airQualityData);
+      return this.parseWeatherData(data.forecast, { features: [] }, data.airQuality);
     } catch (error) {
       console.error('Weather service error:', error);
-      // Return mock data on API failure
       return this.getMockWeatherData();
     }
   }

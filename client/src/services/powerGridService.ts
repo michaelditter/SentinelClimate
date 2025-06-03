@@ -28,17 +28,28 @@ export class PowerGridService {
 
   async getCurrentGridStatus(): Promise<PowerGridData> {
     try {
-      // Real-time system conditions
-      const [loadData, capacityData, renewableData] = await Promise.all([
-        this.fetchERCOTData('/NP4-190-CD/act_sys_load_by_wz'),
-        this.fetchERCOTData('/NP3-966-ER/op_cap_by_fuel_type'),
-        this.fetchERCOTData('/NP4-732-CD/wpp_hrly_avrg_actl_fcast')
-      ]);
+      // Use server-side proxy endpoint for authentic EIA data
+      const response = await fetch('/api/power-grid');
+      
+      if (!response.ok) {
+        throw new Error(`Power grid proxy API error: ${response.status}`);
+      }
 
-      return this.parseGridData(loadData, capacityData, renewableData);
+      const gridData = await response.json();
+      
+      // Return the transformed data from EIA API
+      return {
+        systemLoad: gridData.systemLoad,
+        totalCapacity: gridData.totalCapacity,
+        reserveMargin: gridData.reserveMargin,
+        demandForecast: gridData.demandForecast,
+        outageCapacity: gridData.outageCapacity,
+        renewableGeneration: gridData.renewableGeneration,
+        gridStability: gridData.gridStability,
+        emergencyLevel: gridData.emergencyLevel
+      };
     } catch (error) {
       console.error('Power grid service error:', error);
-      // Return realistic data based on Texas grid patterns
       return this.getRealisticGridData();
     }
   }

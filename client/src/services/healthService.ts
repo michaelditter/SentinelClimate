@@ -44,15 +44,15 @@ export class HealthService {
 
   async getHeatHealthData(fipsCode: string, startDate: string, endDate: string): Promise<HealthSurveillanceData | null> {
     try {
-      // CDC Environmental Public Health Tracking API
-      const heatIllnessResponse = await this.fetchCDCData('chronicheatillness', fipsCode, startDate, endDate);
-      const mortalityResponse = await this.fetchCDCData('heatmortality', fipsCode, startDate, endDate);
+      // Use server-side proxy endpoint for authentic CDC data
+      const response = await fetch(`/api/health-data?fipsCode=${fipsCode}&startDate=${startDate}&endDate=${endDate}`);
       
-      if (heatIllnessResponse && mortalityResponse) {
-        return this.parseHealthData(heatIllnessResponse, mortalityResponse, fipsCode);
+      if (!response.ok) {
+        throw new Error(`Health data proxy API error: ${response.status}`);
       }
-      
-      return null;
+
+      const cdcData = await response.json();
+      return this.parseHealthData(cdcData, null, fipsCode);
     } catch (error) {
       console.error('Health service error:', error);
       return null;
