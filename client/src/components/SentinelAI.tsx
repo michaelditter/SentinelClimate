@@ -167,6 +167,71 @@ const SentinelAI: React.FC = () => {
     }
   };
 
+  const handleEmergencyAlert = () => {
+    const alertMessage = 'CRITICAL: Multi-county heat emergency detected. Immediate response required.';
+    handleEmergencyCall('COMMANDER', alertMessage);
+    
+    const newActivity = {
+      time: new Date().toLocaleTimeString(),
+      agent: 'SYSTEM',
+      message: 'Emergency alert broadcast initiated',
+      icon: '🚨'
+    };
+    setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+  };
+
+  const handleGenerateReport = () => {
+    const reportData = {
+      timestamp: new Date().toISOString(),
+      criticalCounties: counties.filter(c => c.alertLevel === 'EXTREME').length,
+      totalPopulationAtRisk: counties.reduce((sum, c) => sum + c.vulnerablePopulation, 0),
+      systemLoad: realTimeData?.powerGrid?.systemLoad || 0,
+      recommendations: [
+        'Deploy additional cooling centers in Harris County',
+        'Increase hospital staffing for surge capacity',
+        'Activate emergency power reserves'
+      ]
+    };
+
+    console.log('Generated Report:', reportData);
+    
+    const newActivity = {
+      time: new Date().toLocaleTimeString(),
+      agent: 'ANALYST',
+      message: `Crisis report generated - ${reportData.criticalCounties} counties at extreme risk`,
+      icon: '📊'
+    };
+    setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+  };
+
+  const handleDeployResources = () => {
+    const resourceCount = Math.floor(Math.random() * 5) + 3;
+    const targetCounties = counties.filter(c => c.alertLevel === 'EXTREME' || c.alertLevel === 'HIGH');
+    
+    const newActivity = {
+      time: new Date().toLocaleTimeString(),
+      agent: 'DISPATCHER',
+      message: `Deploying ${resourceCount} mobile units to ${targetCounties.length} high-risk counties`,
+      icon: '🚛'
+    };
+    setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+  };
+
+  const handleRunSimulation = () => {
+    if (scenarios.length > 0) {
+      const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      handleSimulationRun(randomScenario);
+      
+      const newActivity = {
+        time: new Date().toLocaleTimeString(),
+        agent: 'SIMULATOR',
+        message: `Running simulation: ${randomScenario.name}`,
+        icon: '🔬'
+      };
+      setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+    }
+  };
+
   const getAlertColor = (level: string) => {
     switch (level) {
       case 'EXTREME': return 'bg-red-600 border-red-400';
@@ -336,6 +401,7 @@ const SentinelAI: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <motion.button 
+                    onClick={handleEmergencyAlert}
                     className="bg-red-600 hover:bg-red-700 p-4 rounded-lg text-center transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -344,6 +410,7 @@ const SentinelAI: React.FC = () => {
                     <div className="font-medium text-white">Emergency Alert</div>
                   </motion.button>
                   <motion.button 
+                    onClick={handleGenerateReport}
                     className="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg text-center transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -352,6 +419,7 @@ const SentinelAI: React.FC = () => {
                     <div className="font-medium text-white">Generate Report</div>
                   </motion.button>
                   <motion.button 
+                    onClick={handleDeployResources}
                     className="bg-orange-600 hover:bg-orange-700 p-4 rounded-lg text-center transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -360,10 +428,10 @@ const SentinelAI: React.FC = () => {
                     <div className="font-medium text-white">Deploy Resources</div>
                   </motion.button>
                   <motion.button 
+                    onClick={handleRunSimulation}
                     className="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg text-center transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedView('crisis-simulation')}
                   >
                     <div className="text-2xl mb-2">🎮</div>
                     <div className="font-medium text-white">Run Simulation</div>
