@@ -3,7 +3,8 @@
 export interface PowerGridData {
   systemLoad: number; // Current system load in MW
   totalCapacity: number; // Total generation capacity in MW
-  reserveMargin: number; // Reserve margin percentage
+  reserveMargin: number; // Reserve margin in MW (absolute value)
+  reserveMarginPercent: number; // Reserve margin percentage
   demandForecast: number; // Forecasted peak demand
   outageCapacity: number; // Capacity on outage
   renewableGeneration: {
@@ -13,6 +14,40 @@ export interface PowerGridData {
   };
   gridStability: 'Normal' | 'Watch' | 'Warning' | 'Emergency';
   emergencyLevel: number; // 1-4 scale
+  gridStressIndex: number; // 0-100 compound risk score
+  regionalData: {
+    houston: {
+      load: number;
+      generation: number;
+      stability: string;
+    };
+    north: {
+      load: number;
+      generation: number;
+      stability: string;
+    };
+    south: {
+      load: number;
+      generation: number;
+      stability: string;
+    };
+    west: {
+      load: number;
+      generation: number;
+      stability: string;
+    };
+  };
+  criticalAlerts: GridAlert[];
+}
+
+export interface GridAlert {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: 'capacity' | 'demand' | 'outage' | 'weather' | 'cascade';
+  message: string;
+  region: string;
+  timestamp: Date;
+  healthImpact: string;
 }
 
 export interface OutageData {
