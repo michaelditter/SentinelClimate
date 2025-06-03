@@ -37,6 +37,7 @@ import EconomicCalculator from './simulation/EconomicCalculator';
 // Data and hooks
 import { counties, resourceDeployments } from '@/data/geoData';
 import { agents } from '@/data/agentData';
+import { scenarios } from '@/data/scenarioData';
 import { useRealTimeData } from '@/hooks/useRealTimeData';
 import { useSimulation } from '@/hooks/useSimulation';
 import { County } from '@/types/geo.types';
@@ -49,6 +50,11 @@ const SentinelAI: React.FC = () => {
   const [selectedView, setSelectedView] = useState<ViewType>('mission-control');
   const [selectedCounty, setSelectedCounty] = useState<County | null>(null);
   const [simulationRunning, setSimulationRunning] = useState(true);
+  const [analysisSteps, setAnalysisSteps] = useState<any[]>([]);
+  const [analysisRunning, setAnalysisRunning] = useState(false);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [callTarget, setCallTarget] = useState({ name: '', phoneNumber: '' });
+  const [selectedAgent, setSelectedAgent] = useState<'SENTINEL' | 'MEDIC' | 'DISPATCHER' | 'COMMANDER'>('COMMANDER');
   
   // Custom hooks
   const { data: realTimeData } = useRealTimeData(simulationRunning);

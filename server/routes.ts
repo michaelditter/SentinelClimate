@@ -261,6 +261,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice Call endpoint for crisis communication
+  app.post('/api/crisis-call', async (req, res) => {
+    try {
+      const { 
+        phoneNumber, 
+        agentType, 
+        targetName, 
+        analysisData,
+        scenario = 'heat-emergency'
+      } = req.body;
+      
+      if (!phoneNumber || !agentType || !targetName) {
+        return res.status(400).json({ error: 'Phone number, agent type, and target name are required' });
+      }
+
+      const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+      const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+      const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+      const elevenlabsApiKey = process.env.ELEVENLABS_API_KEY;
+
+      if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+        return res.status(500).json({ error: 'Voice call service configuration error - Twilio credentials missing' });
+      }
+
+      if (!elevenlabsApiKey) {
+        return res.status(500).json({ error: 'Voice call service configuration error - ElevenLabs API key missing' });
+      }
+
+      // Generate crisis script based on agent type and analysis data
+      const script = generateCrisisScript(agentType, targetName, analysisData);
+      
+      // Get voice ID for agent
+      const voiceId = getAgentVoiceId(agentType);
+      
+      // Generate voice using ElevenLabs
+      const voiceResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenlabsApiKey
+        },
+        body: JSON.stringify({
+          text: script,
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: {
+            stability: 0.7,
+            similarity_boost: 0.8,
+            style: 0.2,
+            use_speaker_boost: true
+          }
+        })
+      });
+
+      if (!voiceResponse.ok) {
+        throw new Error(`ElevenLabs API error: ${voiceResponse.statusText}`);
+      }
+
+      const audioBuffer = await voiceResponse.arrayBuffer();
+      const audioBase64 = Buffer.from(audioBuffer).toString('base64');
+      
+      // Create TwiML for the call
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="alice">This is an emergency alert from Sentinel AI Crisis Prevention System.</Say>
+    <Play>data:audio/mpeg;base64,${audioBase64}</Play>
+    <Say voice="alice">Thank you for your attention. This concludes the emergency notification.</Say>
+</Response>`;
+
+      // Make the call using Twilio
+      const callResponse = await fetch('https://api.twilio.com/2010-04-01/Accounts/' + twilioAccountSid + '/Calls.json', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(twilioAccountSid + ':' + twilioAuthToken).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          To: phoneNumber,
+          From: twilioPhoneNumber,
+          Twiml: twiml
+        })
+      });
+
+      if (!callResponse.ok) {
+        throw new Error(`Twilio call API error: ${callResponse.statusText}`);
+      }
+
+      const callResult = await callResponse.json();
+      
+      res.json({
+        success: true,
+        callSid: callResult.sid,
+        status: callResult.status,
+        agentType,
+        targetName,
+        message: 'Emergency call initiated successfully'
+      });
+
+    } catch (error) {
+      console.error('Crisis call error:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to initiate crisis call'
+      });
+    }
+  });
+
+  // Helper functions for crisis calls
+  function generateCrisisScript(agentType: string, targetName: string, analysisData: any): string {
+    const scripts = {
+      'SENTINEL': `Hello ${targetName}, this is the Sentinel AI Weather Monitoring System calling with an urgent climate alert. We have detected an extreme heat event developing in your area with temperatures expected to reach ${analysisData?.SENTINEL?.peakTemp || 119} degrees Fahrenheit over the next ${analysisData?.SENTINEL?.duration || 72} hours. Heat index values may exceed ${analysisData?.SENTINEL?.heatIndex || 125} degrees. Our confidence level is ${analysisData?.SENTINEL?.confidence || 94} percent. We recommend immediate activation of heat emergency protocols including opening public cooling centers, issuing public heat warnings, and preparing emergency medical services for increased demand. This is a high-priority alert requiring immediate attention. Please confirm receipt and coordinate with emergency management. Thank you.`,
+      
+      'MEDIC': `Hello ${targetName}, this is the Sentinel AI Medical Coordination Agent with a critical healthcare surge alert. Our predictive models indicate a ${analysisData?.MEDIC?.surgePrediction || 137} percent increase in emergency department visits expected within the next 48 hours due to extreme heat conditions. We anticipate ${analysisData?.MEDIC?.expectedCases || 850} cases affecting a vulnerable population of ${analysisData?.MEDIC?.vulnerablePopulation || 45000} individuals. Hospital capacity is currently at ${analysisData?.MEDIC?.hospitalCapacity || 78} percent. We recommend immediate implementation of hospital surge protocols and consider activating additional medical staff. Current prediction confidence is ${analysisData?.MEDIC?.confidence || 89} percent. Please acknowledge receipt and coordinate appropriate medical response.`,
+      
+      'DISPATCHER': `Hello ${targetName}, this is the Sentinel AI Resource Dispatch Agent calling with emergency deployment notification. We are currently deploying ${analysisData?.DISPATCHER?.mobileUnits || 15} mobile health units and activating ${analysisData?.DISPATCHER?.coolingCenters || 8} cooling centers in response to predicted extreme heat emergency. Resource deployment includes mobile units staged in high-vulnerability census tracts, EMS units positioned strategically with ${analysisData?.DISPATCHER?.emsUnits || 35} ambulances on standby. Resource deployment efficiency is optimized at ${analysisData?.DISPATCHER?.efficiency || 97} percent. Requesting coordination with local emergency management for optimal response coverage. Thank you.`,
+      
+      'COMMANDER': `Hello ${targetName}, this is the Sentinel AI Strategic Command Center Agent with a critical crisis authorization update. We have authorized ${analysisData?.COMMANDER?.authorizationLevel || 'EXTREME'} level crisis response for your jurisdiction. A heat dome event is imminent with potential for significant public health impact. Without intervention, we estimate ${analysisData?.COMMANDER?.potentialDeaths || 15} heat-related fatalities. Key authorizations include multi-agency emergency coordination activated, total deployment budget authorized at ${analysisData?.COMMANDER?.deploymentCost || 2.4} million dollars, projected healthcare cost savings of ${analysisData?.COMMANDER?.costSavings || 9.8} million dollars. This is a critical time-sensitive alert requiring immediate executive action. Coordinate with all emergency services and implement maximum heat emergency protocols immediately. Thank you.`
+    };
+    
+    return scripts[agentType] || scripts.COMMANDER;
+  }
+
+  function getAgentVoiceId(agentType: string): string {
+    const voices = {
+      'SENTINEL': 'EXAVITQu4vr4xnSDxMaL',   // Professional analyst
+      'MEDIC': 'ThT5KcBeYPX3keUQqHPh',     // Caring healthcare professional  
+      'DISPATCHER': 'onwK4e9ZLuTAKqWW03F9', // Efficient coordinator
+      'COMMANDER': 'pNInz6obpgDQGcFmaJgB'   // Authoritative leader
+    };
+    return voices[agentType] || voices.COMMANDER;
+  }
+
   const httpServer = createServer(app);
 
   return httpServer;
