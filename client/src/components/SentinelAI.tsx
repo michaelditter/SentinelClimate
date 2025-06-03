@@ -57,6 +57,7 @@ const SentinelAI: React.FC = () => {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [callTarget, setCallTarget] = useState({ name: '', phoneNumber: '' });
   const [selectedAgent, setSelectedAgent] = useState<'SENTINEL' | 'MEDIC' | 'DISPATCHER' | 'COMMANDER'>('COMMANDER');
+  const [phoneNumber, setPhoneNumber] = useState('+15551234567');
   
   // Custom hooks
   const { data: realTimeData } = useRealTimeData(simulationRunning);
@@ -112,7 +113,7 @@ const SentinelAI: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          phoneNumber: '+15551234567', // Emergency coordinator
+          phoneNumber: phoneNumber,
           message: message,
           agentType: agentType,
           severity: 'CRITICAL'
@@ -148,7 +149,7 @@ const SentinelAI: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          phoneNumber: '+15551234567',
+          phoneNumber: phoneNumber,
           message: message,
           agentType: agentType
         })
@@ -461,6 +462,20 @@ const SentinelAI: React.FC = () => {
                     <Phone className="h-5 w-5 mr-2" />
                     Crisis Communication
                   </h4>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Emergency Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+1234567890"
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  
                   <div className="grid grid-cols-1 gap-3">
                     <motion.button 
                       onClick={() => handleCrisisCall('COMMANDER', 'CRITICAL')}
