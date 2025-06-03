@@ -607,6 +607,14 @@ const SentinelAI: React.FC = () => {
           />
         );
 
+      case 'county-analysis':
+        return (
+          <CountyDeepDive 
+            selectedCounty={selectedCounty || { fips: '48201', name: 'Harris County' }}
+            realTimeData={realTimeData}
+          />
+        );
+
       default:
         return null;
     }
@@ -641,6 +649,10 @@ const SentinelAI: React.FC = () => {
     'economic-analysis': {
       title: 'Economic Analysis',
       subtitle: 'Cost-benefit analysis and ROI projections'
+    },
+    'county-analysis': {
+      title: 'County Deep Dive Analysis',
+      subtitle: 'Comprehensive county-level health and infrastructure assessment'
     }
   };
 
