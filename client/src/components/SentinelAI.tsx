@@ -20,7 +20,9 @@ import {
   Map,
   Bot,
   Flame,
-  Banknote
+  Banknote,
+  Phone,
+  MessageSquare
 } from 'lucide-react';
 
 // Component imports
@@ -238,6 +240,16 @@ const SentinelAI: React.FC = () => {
     }
   };
 
+  const handleCrisisCall = async (agentType: string, severity: string) => {
+    const crisisMessage = `CRISIS ALERT: ${agentType} agent detecting ${severity} grid-health cascade failure risk in Harris County. Immediate cooling center activation and EMS coordination required.`;
+    await handleEmergencyCall(agentType, crisisMessage);
+  };
+
+  const handleSendSMS = async (agentType: string, severity: string) => {
+    const smsMessage = `SENTINEL AI ALERT: ${severity} priority - Grid instability detected during heat emergency. Deploy mobile cooling units to vulnerable populations immediately.`;
+    await handleEmergencySMS(agentType, smsMessage);
+  };
+
   const getAlertColor = (level: string) => {
     switch (level) {
       case 'EXTREME': return 'bg-red-600 border-red-400';
@@ -442,6 +454,37 @@ const SentinelAI: React.FC = () => {
                     <div className="text-2xl mb-2">🎮</div>
                     <div className="font-medium text-white">Run Simulation</div>
                   </motion.button>
+                </div>
+                
+                <div className="mt-6 bg-gray-700 p-4 rounded-lg border border-red-400">
+                  <h4 className="text-lg font-bold mb-3 text-red-400 flex items-center">
+                    <Phone className="h-5 w-5 mr-2" />
+                    Crisis Communication
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <motion.button 
+                      onClick={() => handleCrisisCall('COMMANDER', 'CRITICAL')}
+                      className="bg-red-700 hover:bg-red-800 p-3 rounded-lg text-center transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <Phone className="h-4 w-4" />
+                        <span className="font-medium text-white">Initiate Crisis Call</span>
+                      </div>
+                    </motion.button>
+                    <motion.button 
+                      onClick={() => handleSendSMS('DISPATCHER', 'HIGH')}
+                      className="bg-orange-700 hover:bg-orange-800 p-3 rounded-lg text-center transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="font-medium text-white">Send Emergency SMS</span>
+                      </div>
+                    </motion.button>
+                  </div>
                 </div>
               </div>
             </div>
