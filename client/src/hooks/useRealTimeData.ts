@@ -1,63 +1,76 @@
 import { useState, useEffect, useCallback } from 'react';
-
-interface RealTimeData {
-  timestamp: Date;
-  temperature: Record<string, number>;
-  alerts: any[];
-  agentStatus: Record<string, any>;
-  kpiData: {
-    livesSaved: number;
-    savingsThisMonth: number;
-    systemsProtected: number;
-    avgResponseTime: number;
-  };
-}
+import { dataIntegrationService, RealTimeSystemData } from '@/services/dataIntegrationService';
 
 export const useRealTimeData = (isActive: boolean = true) => {
-  const [data, setData] = useState<RealTimeData>({
-    timestamp: new Date(),
-    temperature: {
-      'harris-tx': 119,
-      'maricopa-az': 115,
-      'miami-dade-fl': 108
-    },
-    alerts: [],
-    agentStatus: {},
-    kpiData: {
-      livesSaved: 12,
-      savingsThisMonth: 47.2,
-      systemsProtected: 156,
-      avgResponseTime: 2.3
-    }
-  });
-  
+  const [data, setData] = useState<RealTimeSystemData | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('connected');
-
-  const updateData = useCallback(() => {
-    setData(prev => ({
-      ...prev,
-      timestamp: new Date(),
-      temperature: {
-        ...prev.temperature,
-        'harris-tx': prev.temperature['harris-tx'] + (Math.random() - 0.5) * 2,
-        'maricopa-az': prev.temperature['maricopa-az'] + (Math.random() - 0.5) * 1.5,
-        'miami-dade-fl': prev.temperature['miami-dade-fl'] + (Math.random() - 0.5) * 1
-      },
-      kpiData: {
-        livesSaved: prev.kpiData.livesSaved + (Math.random() > 0.95 ? 1 : 0),
-        savingsThisMonth: prev.kpiData.savingsThisMonth + Math.random() * 0.1,
-        systemsProtected: prev.kpiData.systemsProtected + (Math.random() > 0.98 ? 1 : 0),
-        avgResponseTime: Math.max(1.5, prev.kpiData.avgResponseTime + (Math.random() - 0.5) * 0.1)
-      }
-    }));
-  }, []);
 
   useEffect(() => {
     if (!isActive) return;
 
-    const interval = setInterval(updateData, 2000);
-    return () => clearInterval(interval);
-  }, [isActive, updateData]);
+    let unsubscribe: (() => void) | null = null;
 
-  return { data, connectionStatus, updateData };
+    const initializeData = async () => {
+      try {
+        setConnectionStatus('connected');
+        
+        // Start real-time updates
+        await dataIntegrationService.startRealTimeUpdates();
+        
+        // Subscribe to data updates
+        unsubscribe = dataIntegrationService.subscribe((newData) => {
+          setData(newData);
+        });
+        
+      } catch (error) {
+        console.error('Real-time data initialization failed:', error);
+        setConnectionStatus('error');
+      }
+    };
+
+    initializeData();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      dataIntegrationService.stopRealTimeUpdates();
+    };
+  }, [isActive]);
+
+  const updateData = useCallback(() => {
+    // Data updates are handled by the integration service
+    const currentData = dataIntegrationService.getCurrentData();
+    if (currentData) {
+      setData(currentData);
+    }
+  }, []);
+
+  return { 
+    data: data || {
+      timestamp: new Date(),
+      weather: {},
+      health: {},
+      powerGrid: {
+        systemLoad: 45000,
+        totalCapacity: 85000,
+        reserveMargin: 25.5,
+        demandForecast: 52000,
+        outageCapacity: 2100,
+        renewableGeneration: { wind: 8500, solar: 2800, total: 11300 },
+        gridStability: 'Normal' as const,
+        emergencyLevel: 1
+      },
+      alerts: [],
+      kpiData: {
+        livesSaved: 12,
+        savingsThisMonth: 47.2,
+        systemsProtected: 156,
+        avgResponseTime: 2.3
+      },
+      agentStatus: {}
+    }, 
+    connectionStatus, 
+    updateData 
+  };
 };
