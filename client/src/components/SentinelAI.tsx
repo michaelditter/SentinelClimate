@@ -71,13 +71,54 @@ const SentinelAI: React.FC = () => {
   const { data: realTimeData } = useRealTimeData(simulationRunning);
   const { isRunning: isSimulationRunning, currentResult, runSimulation } = useSimulation();
 
-  // Activity feed state
+  // Fetch live county data from government sources
+  const fetchLiveCountyData = async () => {
+    try {
+      const response = await fetch('/api/live-county-alerts');
+      if (response.ok) {
+        const data = await response.json();
+        setLiveCounties(data.counties);
+        
+        // Generate real activity based on actual conditions
+        const criticalCounties = data.counties.filter((c: any) => c.alertLevel === 'EXTREME' || c.alertLevel === 'HIGH');
+        if (criticalCounties.length > 0) {
+          const county = criticalCounties[0];
+          const newActivity = {
+            time: new Date().toLocaleTimeString(),
+            agent: 'SENTINEL',
+            message: `LIVE: ${county.alertLevel} heat alert in ${county.name} - ${county.temperature}°F recorded`,
+            icon: '🌡️'
+          };
+          setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch live county data:', error);
+    }
+  };
+
+  // Activity feed state - starts with initial government data feed
   const [activityFeed, setActivityFeed] = useState([
-    { time: '13:45:32', agent: 'SENTINEL', message: 'Detected heat spike in Harris County +8°F', icon: '🔍' },
-    { time: '13:45:30', agent: 'MEDIC', message: 'Updated surge prediction: 24% increase', icon: '🏥' },
-    { time: '13:45:28', agent: 'DISPATCHER', message: 'Deploying 8 mobile units to Zone Alpha', icon: '🚀' },
-    { time: '13:45:25', agent: 'COMMANDER', message: 'Authorized cooling center activation', icon: '⚡' }
+    { time: new Date().toLocaleTimeString(), agent: 'SENTINEL', message: 'Connecting to National Weather Service...', icon: '🔍' },
+    { time: new Date().toLocaleTimeString(), agent: 'SYSTEM', message: 'Initializing live government data feeds', icon: '📡' }
   ]);
+
+  // Real-time data integration
+  useEffect(() => {
+    // Initial fetch
+    fetchLiveCountyData();
+    
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+      
+      // Refresh live county data every 5 minutes
+      if (new Date().getMinutes() % 5 === 0 && new Date().getSeconds() === 0) {
+        fetchLiveCountyData();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Real-time updates
   useEffect(() => {
@@ -446,7 +487,7 @@ const SentinelAI: React.FC = () => {
                   Interactive Heat Risk Map
                 </h3>
                 <InteractiveMap
-                  counties={counties}
+                  counties={liveCounties}
                   selectedCounty={selectedCounty}
                   onCountySelect={setSelectedCounty}
                 />
