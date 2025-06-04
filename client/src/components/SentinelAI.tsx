@@ -39,6 +39,7 @@ import EnhancedCountyDeepDive from './EnhancedCountyDeepDive';
 import RealTimeKPIs from './RealTimeKPIs';
 import CountyProjections from './CountyProjections';
 import TriggerOutreach from './TriggerOutreach';
+import SocialListening from './SocialListening';
 import WeatherSentinelMCP from './WeatherSentinelMCP';
 
 // Data and hooks
@@ -50,7 +51,7 @@ import { useSimulation } from '@/hooks/useSimulation';
 import { County } from '@/types/geo.types';
 import { SimulationScenario } from '@/types/simulation.types';
 
-type ViewType = 'weather-sentinel-mcp' | 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'county-analysis' | 'trigger-outreach';
+type ViewType = 'weather-sentinel-mcp' | 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'county-analysis' | 'social-listening' | 'trigger-outreach';
 
 const SentinelAI: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -535,6 +536,9 @@ const SentinelAI: React.FC = () => {
           />
         );
 
+      case 'social-listening':
+        return <SocialListening />;
+
       case 'trigger-outreach':
         return (
           <TriggerOutreach 
@@ -583,6 +587,10 @@ const SentinelAI: React.FC = () => {
     'county-analysis': {
       title: 'County Deep Dive Analysis',
       subtitle: 'Comprehensive county-level health and infrastructure assessment'
+    },
+    'social-listening': {
+      title: 'Social Listening Intelligence',
+      subtitle: 'Real-time crisis detection across digital channels'
     },
     'trigger-outreach': {
       title: 'Trigger Outreach System',
