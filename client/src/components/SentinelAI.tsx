@@ -38,6 +38,7 @@ import EconomicCalculator from './simulation/EconomicCalculator';
 import EnhancedCountyDeepDive from './EnhancedCountyDeepDive';
 import RealTimeKPIs from './RealTimeKPIs';
 import CountyProjections from './CountyProjections';
+import TriggerOutreach from './TriggerOutreach';
 
 // Data and hooks
 import { counties, resourceDeployments } from '@/data/geoData';
@@ -48,7 +49,7 @@ import { useSimulation } from '@/hooks/useSimulation';
 import { County } from '@/types/geo.types';
 import { SimulationScenario } from '@/types/simulation.types';
 
-type ViewType = 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'economic-analysis' | 'county-analysis';
+type ViewType = 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'economic-analysis' | 'county-analysis' | 'trigger-outreach';
 
 const SentinelAI: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -588,6 +589,14 @@ const SentinelAI: React.FC = () => {
           />
         );
 
+      case 'trigger-outreach':
+        return (
+          <TriggerOutreach 
+            selectedCounty={selectedCounty}
+            realTimeData={realTimeData}
+          />
+        );
+
       default:
         return null;
     }
@@ -598,6 +607,7 @@ const SentinelAI: React.FC = () => {
     { key: 'risk-assessment', icon: Map, label: 'Risk Assessment', emoji: '🗺️' },
     { key: 'agent-coordination', icon: Bot, label: 'Agent Coordination', emoji: '🤖' },
     { key: 'crisis-simulation', icon: Flame, label: 'Crisis Simulation', emoji: '⚡' },
+    { key: 'trigger-outreach', icon: Phone, label: 'Trigger Outreach', emoji: '📞' },
     { key: 'economic-analysis', icon: Banknote, label: 'Economic Analysis', emoji: '💰' },
     { key: 'county-analysis', icon: Building, label: 'County Deep Dive', emoji: '🏙️' }
   ];
@@ -626,6 +636,10 @@ const SentinelAI: React.FC = () => {
     'county-analysis': {
       title: 'County Deep Dive Analysis',
       subtitle: 'Comprehensive county-level health and infrastructure assessment'
+    },
+    'trigger-outreach': {
+      title: 'Trigger Outreach System',
+      subtitle: 'AI-powered crisis response and emergency communications'
     }
   };
 
