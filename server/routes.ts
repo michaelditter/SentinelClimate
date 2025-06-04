@@ -2240,51 +2240,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: 'OpenAI API key not configured' });
       }
 
-      // Use OpenAI to simulate web search and analysis for crisis detection
+      // Execute real web search using OpenAI with web search capabilities
       // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const searchPrompt = `You are analyzing real-time crisis indicators for emergency management. 
+      const searchPrompt = `Execute a comprehensive web search for climate-health crisis monitoring:
 
 Search Query: "${query}"
 Section: ${sectionId}
 Location Focus: Harris County, Texas and surrounding areas
 
-Based on this query, analyze current crisis conditions and return realistic search results in this exact JSON format:
+Instructions:
+1. Search for recent information about current crisis conditions
+2. Focus on authoritative sources (government agencies, health organizations, news outlets)
+3. Extract real URLs, titles, and content snippets
+4. Assess urgency and credibility of sources
+5. Return actual clickable sources with real URLs
 
+Return results in this exact JSON format:
 {
   "id": "unique_search_id",
   "query": "${query}",
   "timestamp": "${new Date().toISOString()}",
   "results": [
     {
-      "title": "Realistic news headline or official announcement",
-      "url": "https://example-source.com/article",
-      "snippet": "Brief excerpt showing crisis indicators or official information",
+      "title": "Actual headline from real source",
+      "url": "Real clickable URL to source",
+      "snippet": "Actual excerpt from the source content",
       "relevanceScore": 0.85,
       "riskLevel": "HIGH",
-      "source": "Official agency or news outlet"
+      "source": "Name of actual publication/organization",
+      "publishedDate": "Publication date",
+      "domain": "Source domain"
     }
   ],
   "alertLevel": "HIGH",
-  "summary": "Brief analysis of what these indicators mean for crisis management"
+  "summary": "Analysis of what these real indicators mean for crisis management"
 }
 
-Focus on actual crisis indicators that would be found in:
+Focus on finding actual current sources for:
 - Official government alerts and warnings
 - Emergency management communications  
 - Healthcare system status reports
 - Infrastructure monitoring data
 - Social media emergency discussions
-- Economic impact assessments
-
-Risk levels: CRITICAL, HIGH, MODERATE, WATCH
-Make results reflect real-world crisis management data sources.`;
+- Economic impact assessments`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a crisis detection AI analyzing real-world emergency indicators. Return only valid JSON with authentic-style search results based on actual crisis management data sources."
+            content: "You are a specialized AI agent for crisis detection that performs real web searches. Search the web for current information and return actual sources with real URLs that users can click and verify. Focus on authoritative sources and real-time crisis indicators."
           },
           {
             role: "user",
@@ -2293,7 +2298,31 @@ Make results reflect real-world crisis management data sources.`;
         ],
         response_format: { type: "json_object" },
         max_tokens: 1500,
-        temperature: 0.3
+        temperature: 0.3,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "web_search",
+              description: "Search the web for real-time crisis information",
+              parameters: {
+                type: "object",
+                properties: {
+                  query: {
+                    type: "string",
+                    description: "The search query to execute"
+                  },
+                  max_results: {
+                    type: "number",
+                    description: "Maximum number of search results to return"
+                  }
+                },
+                required: ["query"]
+              }
+            }
+          }
+        ],
+        tool_choice: "auto"
       });
 
       const searchResults = JSON.parse(completion.choices[0].message.content);
