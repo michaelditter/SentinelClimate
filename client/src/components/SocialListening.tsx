@@ -395,10 +395,17 @@ const SocialListening: React.FC = () => {
                 </div>
 
                 {/* Results Summary */}
-                {section.results.length > 0 && (
+                {/* Only show results if they contain genuine crisis indicators */}
+                {section.results.length > 0 && section.results.some(result => 
+                  result.alertLevel !== 'NONE' && 
+                  result.results.length > 0 &&
+                  result.alertLevel !== 'WATCH' ||
+                  (result.alertLevel === 'WATCH' && result.results.length > 0 && 
+                   result.summary && !result.summary.includes('No relevant'))
+                ) && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-white text-sm">Recent Findings:</h4>
+                      <h4 className="font-medium text-white text-sm">Crisis Indicators Found:</h4>
                       <div className="flex items-center space-x-1 text-xs text-gray-400">
                         <Clock className="h-3 w-3" />
                         {formatTimeAgo(section.lastRun)}
@@ -406,7 +413,14 @@ const SocialListening: React.FC = () => {
                     </div>
                     
                     <AnimatePresence>
-                      {section.results.slice(0, 2).map((result, resultIndex) => (
+                      {section.results
+                        .filter(result => 
+                          result.alertLevel !== 'NONE' && 
+                          result.results.length > 0 &&
+                          (!result.summary || !result.summary.includes('No relevant'))
+                        )
+                        .slice(0, 2)
+                        .map((result, resultIndex) => (
                         <motion.div
                           key={`${section.id}-${result.id}-${resultIndex}`}
                           initial={{ opacity: 0, height: 0 }}
@@ -419,7 +433,7 @@ const SocialListening: React.FC = () => {
                               {result.alertLevel}
                             </Badge>
                             <div className="text-xs text-gray-400">
-                              {result.results.length} sources
+                              {result.results.length} verified sources
                             </div>
                           </div>
                           
@@ -456,14 +470,32 @@ const SocialListening: React.FC = () => {
                             </div>
                           )}
                           
-                          {result.summary && (
+                          {result.summary && !result.summary.includes('No relevant') && (
                             <div className="text-xs text-blue-300 bg-blue-900/20 p-2 rounded">
-                              AI Summary: {result.summary}
+                              Crisis Analysis: {result.summary}
                             </div>
                           )}
                         </motion.div>
                       ))}
                     </AnimatePresence>
+                  </div>
+                )}
+
+                {/* Show monitoring status when no crisis indicators found */}
+                {section.lastRun && (section.results.length === 0 || 
+                  section.results.every(result => 
+                    result.alertLevel === 'NONE' || 
+                    result.results.length === 0 ||
+                    (result.summary && result.summary.includes('No relevant'))
+                  )
+                ) && (
+                  <div className="text-center py-4">
+                    <div className="text-sm text-gray-400">
+                      ✓ Monitoring active - No crisis indicators detected
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Last scan: {formatTimeAgo(section.lastRun)}
+                    </div>
                   </div>
                 )}
 

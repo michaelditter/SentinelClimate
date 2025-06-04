@@ -2280,11 +2280,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const googleData = await googleResponse.json();
       const googleResults = googleData.items || [];
 
-      // Process and analyze results with OpenAI
-      const analysisPrompt = `Analyze these real web search results for crisis indicators:
+      // Filter and analyze results with OpenAI for crisis relevance
+      const analysisPrompt = `Analyze these web search results for genuine crisis indicators and filter out irrelevant content:
 
 Search Query: "${searchQuery}"
 Section: ${sectionId}
+Location Focus: Harris County, Texas
 
 Search Results:
 ${googleResults.map((item, index) => `
@@ -2294,20 +2295,30 @@ ${index + 1}. Title: ${item.title}
    Source: ${item.displayLink}
 `).join('\n')}
 
-Analyze these results and return a JSON assessment:
+STRICT FILTERING CRITERIA:
+- ONLY include results directly related to climate health emergencies, heat warnings, hospital strain, power grid issues, or emergency response
+- EXCLUDE: general news, entertainment, politics, sports, celebrity gossip, unrelated topics
+- REQUIRE: Direct connection to crisis management, emergency services, public health alerts, or infrastructure monitoring
+- MINIMUM RELEVANCE: Results must specifically mention emergency conditions, health alerts, power issues, or crisis response
+
+Return JSON assessment with filtered results:
 {
-  "alertLevel": "CRITICAL|HIGH|MODERATE|WATCH",
-  "summary": "Brief analysis of crisis indicators found",
-  "relevanceScore": 0.85,
-  "riskAssessment": "What these results indicate for emergency management"
-}`;
+  "isRelevant": true/false,
+  "alertLevel": "CRITICAL|HIGH|MODERATE|WATCH|NONE",
+  "summary": "Brief analysis of crisis indicators found or 'No relevant crisis indicators found'",
+  "relevanceScore": 0.0-1.0,
+  "filteredResults": [array of only genuinely relevant result indices],
+  "rejectionReason": "Why results were filtered out if not relevant"
+}
+
+If no results meet crisis relevance criteria, set isRelevant to false and filteredResults to empty array.`;
 
       const analysisResponse = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a crisis detection analyst. Assess real search results for emergency indicators and risk levels."
+            content: "You are a strict crisis detection filter. Only approve results that directly relate to emergency conditions, health alerts, infrastructure failures, or official crisis response. Reject entertainment, general news, politics, and unrelated content."
           },
           {
             role: "user",
@@ -2316,7 +2327,7 @@ Analyze these results and return a JSON assessment:
         ],
         response_format: { type: "json_object" },
         max_tokens: 500,
-        temperature: 0.3
+        temperature: 0.1
       });
 
       let analysis;
@@ -2329,28 +2340,47 @@ Analyze these results and return a JSON assessment:
       } catch (parseError) {
         console.error('Failed to parse analysis response:', parseError);
         analysis = {
-          alertLevel: 'MODERATE',
-          summary: 'Analysis in progress',
-          relevanceScore: 0.7,
-          riskAssessment: 'Unable to complete full analysis'
+          isRelevant: false,
+          alertLevel: 'NONE',
+          summary: 'No relevant crisis indicators found',
+          relevanceScore: 0.0,
+          filteredResults: [],
+          rejectionReason: 'Analysis parsing failed'
         };
       }
 
-      // Format results for frontend
+      // Only return results if they are genuinely relevant to crisis monitoring
+      if (!analysis.isRelevant || analysis.relevanceScore < 0.6 || !analysis.filteredResults || analysis.filteredResults.length === 0) {
+        // Return empty result set for irrelevant content
+        const emptyResults = {
+          id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          query: searchQuery,
+          timestamp: new Date().toISOString(),
+          results: [],
+          alertLevel: 'NONE',
+          summary: 'No relevant crisis indicators detected in current search results'
+        };
+        res.json(emptyResults);
+        return;
+      }
+
+      // Filter and format only relevant results
+      const relevantGoogleResults = analysis.filteredResults.map((index: number) => googleResults[index]).filter(Boolean);
+      
       const searchResults = {
-        results: googleResults.map((item, index) => ({
+        results: relevantGoogleResults.map((item: any, index: number) => ({
           id: `result-${index}-${Date.now()}`,
           title: item.title || 'No title available',
           url: item.link || '#',
           snippet: item.snippet || 'No description available',
-          relevanceScore: analysis.relevanceScore || 0.7,
-          riskLevel: analysis.alertLevel || 'MODERATE',
+          relevanceScore: analysis.relevanceScore,
+          riskLevel: analysis.alertLevel,
           source: item.displayLink || 'Unknown source',
           publishedDate: item.pagemap?.metatags?.[0]?.date || new Date().toISOString(),
           timestamp: new Date().toISOString()
         })),
-        alertLevel: analysis.alertLevel || 'MODERATE',
-        summary: analysis.summary || 'Real-time crisis monitoring analysis'
+        alertLevel: analysis.alertLevel,
+        summary: analysis.summary
       };
       
       // Return structured results
