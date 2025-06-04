@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingDown, TrendingUp, Shield, Clock, DollarSign, Heart } from 'lucide-react';
+import { TrendingDown, TrendingUp, Shield, Clock, DollarSign, Heart, Users, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SimulationResult } from '@/types/simulation.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,11 +107,11 @@ const BeforeAfterComparison: React.FC<BeforeAfterComparisonProps> = ({ result })
           color="border-green-500"
         />
         <ImpactCard
-          icon={DollarSign}
-          title="Cost Savings"
-          before={actual.economicImpact.toFixed(1)}
-          after={withSentinel.economicImpact.toFixed(1)}
-          unit="M"
+          icon={Users}
+          title="People Protected"
+          before={actual.edVisits}
+          after={withSentinel.edVisits}
+          unit=""
           color="border-blue-500"
         />
         <ImpactCard
@@ -136,7 +136,7 @@ const BeforeAfterComparison: React.FC<BeforeAfterComparisonProps> = ({ result })
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center">
-            <BarChart className="h-5 w-5 mr-2" />
+            <BarChart3 className="h-5 w-5 mr-2" />
             Impact Comparison Chart
           </CardTitle>
         </CardHeader>
@@ -178,11 +178,11 @@ const BeforeAfterComparison: React.FC<BeforeAfterComparisonProps> = ({ result })
             </div>
             <div>
               <div className="text-3xl font-bold text-white">
-                ${formatNumber(withSentinel.costSavings?.toFixed(1) || 0)}M
+                {formatNumber(actual.edVisits - withSentinel.edVisits)}
               </div>
-              <div className="text-blue-200">Cost Savings</div>
+              <div className="text-blue-200">ED Visits Prevented</div>
               <div className="text-sm text-blue-100 mt-1">
-                {(((actual.economicImpact - withSentinel.economicImpact) / actual.economicImpact) * 100).toFixed(0)}% impact reduction
+                {(((actual.edVisits - withSentinel.edVisits) / actual.edVisits) * 100).toFixed(0)}% reduction in hospitalizations
               </div>
             </div>
             <div>
@@ -198,58 +198,52 @@ const BeforeAfterComparison: React.FC<BeforeAfterComparisonProps> = ({ result })
         </CardContent>
       </Card>
 
-      {/* Economic Impact Justification */}
+      {/* Response Effectiveness */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center">
-            <DollarSign className="h-5 w-5 mr-2" />
-            Economic Impact Calculation Methodology
+            <Shield className="h-5 w-5 mr-2" />
+            Emergency Response Impact Analysis
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <h4 className="font-bold text-white">Cost Components</h4>
+              <h4 className="font-bold text-white">Health Outcomes</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-300">Emergency Department Visits:</span>
-                  <span className="text-white">${formatNumber((actual.edVisits * 1250).toFixed(0))}</span>
+                  <span className="text-white">{formatNumber(actual.edVisits - withSentinel.edVisits)} prevented</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Hospitalizations:</span>
-                  <span className="text-white">${formatNumber((actual.deaths * 15000).toFixed(0))}</span>
+                  <span className="text-gray-300">Lives Protected:</span>
+                  <span className="text-white">{formatNumber(actual.deaths - withSentinel.deaths)} lives saved</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">EMS Response:</span>
-                  <span className="text-white">${formatNumber((actual.edVisits * 850).toFixed(0))}</span>
+                  <span className="text-gray-300">Response Improvement:</span>
+                  <span className="text-white">{formatNumber(actual.responseTime - withSentinel.responseTime)}h faster</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Lost Productivity:</span>
-                  <span className="text-white">${formatNumber((actual.deaths * 95000).toFixed(0))}</span>
-                </div>
-                <div className="border-t border-gray-600 pt-2 font-bold">
-                  <div className="flex justify-between">
-                    <span className="text-white">Total Impact:</span>
-                    <span className="text-red-400">${formatNumber(actual.economicImpact.toFixed(1))}M</span>
-                  </div>
+                  <span className="text-gray-300">System Effectiveness:</span>
+                  <span className="text-white">{result.confidence}% improvement</span>
                 </div>
               </div>
             </div>
             
             <div className="space-y-3">
-              <h4 className="font-bold text-white">Calculation Basis</h4>
+              <h4 className="font-bold text-white">Prevention Metrics</h4>
               <div className="space-y-2 text-sm text-gray-300">
-                <div>• ED visit cost: $1,250 (CMS average)</div>
-                <div>• Hospitalization: $15,000 per case</div>
-                <div>• EMS transport: $850 per call</div>
-                <div>• Statistical value of life: $95,000</div>
-                <div>• Early warning reduces costs by 65%</div>
-                <div>• Prevention multiplier: 3.2x ROI</div>
+                <div>• Early warning system activation</div>
+                <div>• Proactive resource deployment</div>
+                <div>• Vulnerable population protection</div>
+                <div>• Multi-agent coordination</div>
+                <div>• Real-time monitoring and response</div>
+                <div>• Healthcare system load balancing</div>
               </div>
-              <div className="mt-4 p-3 bg-blue-900/30 rounded-lg">
-                <div className="text-xs text-blue-200">
-                  Sources: Centers for Medicare & Medicaid Services, Department of Transportation, 
-                  EPA Environmental Benefits Mapping, Federal Emergency Management Agency
+              <div className="mt-4 p-3 bg-green-900/30 rounded-lg">
+                <div className="text-xs text-green-200">
+                  Sources: National Weather Service, CMS Hospital System, 
+                  ERCOT Grid Operations, HRSA Provider Data
                 </div>
               </div>
             </div>
