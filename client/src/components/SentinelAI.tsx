@@ -764,7 +764,7 @@ const SentinelAI: React.FC = () => {
   };
 
   const navigationItems = [
-    { key: 'weather-sentinel-mcp', icon: Zap, label: 'Weather Sentinel MCP', emoji: '🛡️' },
+    { key: 'weather-sentinel-mcp', icon: Zap, label: 'Sentinel AI MCP', emoji: '🛡️' },
     { key: 'mission-control', icon: Target, label: 'Mission Control', emoji: '🎯' },
     { key: 'risk-assessment', icon: Map, label: 'Risk Assessment', emoji: '🗺️' },
     { key: 'agent-coordination', icon: Bot, label: 'Agent Coordination', emoji: '🤖' },
