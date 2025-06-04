@@ -1604,6 +1604,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           state: "TX",
           population: 4731145,
           fips: "48201",
+          coordinates: { lat: 29.7604, lon: -95.3698 },
+          gridOperator: "ERCOT",
+          nwsOffice: "HGX",
           vulnerabilityFactors: {
             seniorPopulation: 0.124,
             housingWithoutAC: 0.08,
@@ -1625,6 +1628,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           state: "AZ",
           population: 4485414,
           fips: "04013",
+          coordinates: { lat: 33.4484, lon: -112.0740 },
+          gridOperator: "APS",
+          nwsOffice: "PSR",
           vulnerabilityFactors: {
             seniorPopulation: 0.168,
             housingWithoutAC: 0.02,
@@ -1640,13 +1646,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
             mentalHealth: { needed: 807, nationalRatio: 18.0 },
             primaryCare: { needed: 3364, nationalRatio: 75.0 }
           }
+        },
+        "12086": {
+          name: "Miami-Dade County",
+          state: "FL",
+          population: 2701767,
+          fips: "12086",
+          coordinates: { lat: 25.7617, lon: -80.1918 },
+          gridOperator: "FPL",
+          nwsOffice: "MFL",
+          vulnerabilityFactors: {
+            seniorPopulation: 0.198,
+            housingWithoutAC: 0.03,
+            povertyRate: 0.161,
+            chronicConditions: 0.48,
+            urbanHeatIsland: 6.8
+          },
+          providerBaselines: {
+            cardiology: { needed: 157, nationalRatio: 5.8 },
+            emergency: { needed: 411, nationalRatio: 15.2 },
+            nephrology: { needed: 32, nationalRatio: 1.2 },
+            psychiatry: { needed: 354, nationalRatio: 13.1 },
+            mentalHealth: { needed: 486, nationalRatio: 18.0 },
+            primaryCare: { needed: 2026, nationalRatio: 75.0 }
+          }
         }
       };
 
       const countyProfile = countyProfiles[fips] || countyProfiles["48201"];
       
-      // Fetch weather data
-      const weatherResponse = await fetch(`https://api.weather.gov/points/29.7604,-95.3698`, {
+      // Fetch weather data using county-specific coordinates
+      const { lat, lon } = countyProfile.coordinates;
+      const weatherResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`, {
         headers: { 'User-Agent': userAgent }
       });
       const weatherData = weatherResponse.ok ? await weatherResponse.json() : null;
@@ -1683,12 +1714,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: extractTemperature(weatherData),
           humidity: extractHumidity(weatherData),
           alertLevel: extractAlertLevel(weatherData),
-          trend: calculateTemperatureTrend(weatherData)
+          trend: calculateTemperatureTrend(weatherData),
+          nwsOffice: countyProfile.nwsOffice,
+          urbanHeatIsland: countyProfile.vulnerabilityFactors.urbanHeatIsland
         },
         grid: {
+          operator: countyProfile.gridOperator,
+          zone: countyProfile.state,
           reserveMargin: gridData?.reserveMargin || 24805,
           capacityUtilization: calculateCapacityUtilization(gridData),
-          status: calculateGridStatus(gridData?.reserveMargin || 24805)
+          status: calculateGridStatus(gridData?.reserveMargin || 24805),
+          regionalLoad: gridData?.systemLoad || 60195
         },
         healthcare: {
           predictions: edPredictions,

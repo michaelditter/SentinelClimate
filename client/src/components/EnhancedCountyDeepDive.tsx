@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -119,8 +120,15 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
   const [socialData, setSocialData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
+  const [activeCounty, setActiveCounty] = useState(selectedCounty?.fips || '48201');
 
-  const currentFips = selectedCounty?.fips || '48201';
+  const availableCounties = [
+    { fips: '48201', name: 'Harris County, TX', state: 'TX' },
+    { fips: '04013', name: 'Maricopa County, AZ', state: 'AZ' },
+    { fips: '12086', name: 'Miami-Dade County, FL', state: 'FL' }
+  ];
+
+  const currentFips = activeCounty;
 
   useEffect(() => {
     let isMounted = true;
@@ -216,14 +224,33 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
     return <Minus className="h-4 w-4 text-gray-500" />;
   };
 
+  const handleCountyChange = (newFips: string) => {
+    setActiveCounty(newFips);
+    setSocialData(null); // Clear social data when switching counties
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{countyData.name} Deep Dive Analysis</h2>
+        <div className="flex items-center space-x-4">
+          <h2 className="text-2xl font-bold">{countyData?.name || 'County'} Deep Dive Analysis</h2>
+          <Select value={activeCounty} onValueChange={handleCountyChange}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Select a county" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableCounties.map((county) => (
+                <SelectItem key={county.fips} value={county.fips}>
+                  {county.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex space-x-2">
-          <Badge className={getStatusColor(countyData.overallRisk)}>
-            {countyData.overallRisk} RISK
+          <Badge className={getStatusColor(countyData?.overallRisk || 'MODERATE')}>
+            {countyData?.overallRisk || 'MODERATE'} RISK
           </Badge>
           <Button 
             onClick={fetchSocialMediaIntelligence}
