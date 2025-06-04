@@ -72,6 +72,8 @@ const SentinelAI: React.FC = () => {
   const [liveCounties, setLiveCounties] = useState<County[]>([]);
   const [showReportModal, setShowReportModal] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<any>(null);
+  const [showDeploymentModal, setShowDeploymentModal] = useState(false);
+  const [deploymentScenario, setDeploymentScenario] = useState<any>(null);
   
   // Custom hooks
   const { data: realTimeData } = useRealTimeData(simulationRunning);
@@ -347,18 +349,93 @@ const SentinelAI: React.FC = () => {
     }
   };
 
-  const handleDeployResources = () => {
-    const resourceCount = Math.floor(Math.random() * 5) + 3;
-    const targetCounties = liveCounties.filter(c => c.alertLevel === 'EXTREME' || c.alertLevel === 'HIGH');
-    
-    const newActivity = {
-      time: new Date().toLocaleTimeString(),
-      agent: 'DISPATCHER',
-      message: `Deploying ${resourceCount} mobile units to ${targetCounties.length} high-risk counties`,
-      icon: '🚛'
-    };
-    setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
-  };
+  const handleDeployResources = async () => {
+    try {
+      // Fetch current real-time data to determine deployment needs
+      const [kpiResponse, weatherResponse] = await Promise.all([
+        fetch('/api/real-time-kpis?county=harris-tx'),
+        fetch('/api/weather-sentinel-live')
+      ]);
+
+      const kpiData = await kpiResponse.json();
+      const weatherData = await weatherResponse.json();
+
+      // Create detailed deployment scenario based on real conditions
+      const scenario = {
+        id: `DEPLOY-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        county: 'Harris County, Texas',
+        threatLevel: 'ELEVATED',
+        primaryConcerns: [
+          'Mental health provider shortage (87% capacity)',
+          'Heat index forecast 95°F+ next 7 days',
+          'Air quality deteriorating (AQI 65 - Moderate)',
+          'ERCOT grid stress during peak demand periods'
+        ],
+        deploymentRequest: {
+          resourceType: 'Virtual Mental Health Crisis Support Network',
+          urgency: 'HIGH',
+          estimatedNeed: '150+ virtual counseling sessions/day',
+          duration: '14-day deployment minimum',
+          specializations: [
+            'Heat stress psychological support',
+            'Air quality health anxiety counseling',
+            'Crisis intervention specialists',
+            'Telehealth platform specialists'
+          ]
+        },
+        currentConditions: {
+          temperature: weatherData.temperature,
+          heatIndex: weatherData.heatIndex,
+          airQuality: kpiData.airQuality?.aqi || 'Monitoring',
+          mentalHealthCapacity: kpiData.providers?.psychiatry?.capacityPercent || 87,
+          gridReserve: kpiData.grid?.reserveMargin || 'Monitoring'
+        },
+        contactProtocol: {
+          primaryNumber: '1-XXX-XXX-XXXX',
+          department: 'Texas Emergency Resource Coordination Center',
+          requestCode: 'HARRIS-MH-HEAT-2025',
+          authorization: 'County Emergency Operations Center'
+        },
+        deploymentChecklist: [
+          'Verify telehealth platform capacity for 150+ concurrent sessions',
+          'Coordinate with local mental health authorities',
+          'Establish heat illness awareness protocols',
+          'Deploy air quality monitoring alerts',
+          'Pre-position cooling center virtual support staff',
+          'Activate 24/7 crisis intervention hotline capacity'
+        ],
+        expectedOutcomes: {
+          mentalHealthSupport: '+45% capacity increase',
+          responseTime: 'Sub-5 minute crisis response',
+          coverage: '24/7 virtual availability',
+          specialtyServices: 'Heat stress and environmental anxiety support'
+        }
+      };
+
+      setDeploymentScenario(scenario);
+      setShowDeploymentModal(true);
+
+      // Add to activity feed
+      const newActivity = {
+        time: new Date().toLocaleTimeString(),
+        agent: 'COMMANDER',
+        message: `Resource deployment simulation initiated - Virtual MH Crisis Network for Harris County`,
+        icon: '🚁'
+      };
+      setActivityFeed(prev => [newActivity, ...prev.slice(0, 9)]);
+
+    } catch (error) {
+      console.error('Deployment simulation error:', error);
+      const errorActivity = {
+        time: new Date().toLocaleTimeString(),
+        agent: 'SYSTEM',
+        message: 'Deployment simulation failed - using emergency protocols',
+        icon: '⚠️'
+      };
+      setActivityFeed(prev => [errorActivity, ...prev.slice(0, 9)]);
+    }
+  };;
 
   const handleRunSimulation = () => {
     if (scenarios.length > 0) {
@@ -1042,6 +1119,237 @@ const SentinelAI: React.FC = () => {
                   <div>
                     <div className="font-medium">Next Update:</div>
                     <div>{generatedReport.next_update}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Resource Deployment Simulation Modal */}
+      {showDeploymentModal && deploymentScenario && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-800 rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-6 border-b border-gray-700">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <Shield className="h-6 w-6 text-red-400" />
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Emergency Resource Deployment Simulation</h2>
+                    <p className="text-sm text-gray-400">Threat Level: {deploymentScenario.threatLevel} | County: {deploymentScenario.county}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDeploymentModal(false)}
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Current Threat Assessment */}
+              <div className="bg-red-900/20 border border-red-600 p-4 rounded-lg">
+                <h3 className="text-lg font-bold text-red-400 mb-3 flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Current Threat Assessment
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    {deploymentScenario.primaryConcerns.map((concern: string, index: number) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
+                        <span className="text-gray-200">{concern}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-700 p-3 rounded">
+                    <h4 className="font-bold text-white mb-2">Live Conditions</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Temperature:</span>
+                        <span className="text-white">{deploymentScenario.currentConditions.temperature}°F</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Heat Index:</span>
+                        <span className="text-white">{deploymentScenario.currentConditions.heatIndex}°F</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Air Quality:</span>
+                        <span className="text-white">AQI {deploymentScenario.currentConditions.airQuality}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">MH Capacity:</span>
+                        <span className="text-white">{deploymentScenario.currentConditions.mentalHealthCapacity}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deployment Request Details */}
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <h3 className="text-lg font-bold text-white mb-3 flex items-center">
+                  <Building className="h-5 w-5 mr-2" />
+                  Resource Deployment Request
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-sm text-gray-400">Resource Type</div>
+                        <div className="text-white font-medium">{deploymentScenario.deploymentRequest.resourceType}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Urgency Level</div>
+                        <div className="text-red-400 font-bold">{deploymentScenario.deploymentRequest.urgency}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Estimated Need</div>
+                        <div className="text-white">{deploymentScenario.deploymentRequest.estimatedNeed}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-400">Duration</div>
+                        <div className="text-white">{deploymentScenario.deploymentRequest.duration}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-400 mb-2">Required Specializations</div>
+                    <div className="space-y-2">
+                      {deploymentScenario.deploymentRequest.specializations.map((spec: string, index: number) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                          <span className="text-gray-200 text-sm">{spec}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Protocol */}
+              <div className="bg-blue-900/20 border border-blue-600 p-4 rounded-lg">
+                <h3 className="text-lg font-bold text-blue-400 mb-3 flex items-center">
+                  <Phone className="h-5 w-5 mr-2" />
+                  Emergency Contact Protocol
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="text-center p-4 bg-blue-800/30 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-400 mb-2">{deploymentScenario.contactProtocol.primaryNumber}</div>
+                      <div className="text-sm text-gray-300">{deploymentScenario.contactProtocol.department}</div>
+                    </div>
+                    <button
+                      onClick={() => window.open(`tel:${deploymentScenario.contactProtocol.primaryNumber}`, '_self')}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Phone className="h-5 w-5" />
+                      <span>Initiate Emergency Call</span>
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-sm text-gray-400">Request Code</div>
+                      <div className="text-white font-mono bg-gray-800 p-2 rounded">{deploymentScenario.contactProtocol.requestCode}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-400">Authorization</div>
+                      <div className="text-white">{deploymentScenario.contactProtocol.authorization}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deployment Checklist */}
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <h3 className="text-lg font-bold text-white mb-3 flex items-center">
+                  <Calculator className="h-5 w-5 mr-2" />
+                  Pre-Deployment Checklist
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {deploymentScenario.deploymentChecklist.map((item: string, index: number) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="w-5 h-5 border-2 border-gray-400 rounded mt-0.5 flex-shrink-0"></div>
+                      <span className="text-gray-200 text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expected Outcomes */}
+              <div className="bg-green-900/20 border border-green-600 p-4 rounded-lg">
+                <h3 className="text-lg font-bold text-green-400 mb-3 flex items-center">
+                  <Target className="h-5 w-5 mr-2" />
+                  Expected Deployment Outcomes
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-sm text-gray-400">Mental Health Support</div>
+                      <div className="text-green-400 font-bold">{deploymentScenario.expectedOutcomes.mentalHealthSupport}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-400">Response Time</div>
+                      <div className="text-green-400 font-bold">{deploymentScenario.expectedOutcomes.responseTime}</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-sm text-gray-400">Coverage</div>
+                      <div className="text-green-400 font-bold">{deploymentScenario.expectedOutcomes.coverage}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-400">Specialty Services</div>
+                      <div className="text-green-400 font-bold">{deploymentScenario.expectedOutcomes.specialtyServices}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-4 pt-4">
+                <button
+                  onClick={() => {
+                    // Simulate deployment call
+                    const deployActivity = {
+                      time: new Date().toLocaleTimeString(),
+                      agent: 'COMMANDER',
+                      message: `Emergency call initiated: ${deploymentScenario.contactProtocol.primaryNumber} - Virtual MH Crisis Network deployment`,
+                      icon: '📞'
+                    };
+                    setActivityFeed(prev => [deployActivity, ...prev.slice(0, 9)]);
+                    setShowDeploymentModal(false);
+                  }}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+                >
+                  Execute Emergency Deployment
+                </button>
+                <button
+                  onClick={() => setShowDeploymentModal(false)}
+                  className="px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Cancel Simulation
+                </button>
+              </div>
+
+              {/* Simulation Metadata */}
+              <div className="border-t border-gray-600 pt-4 text-sm text-gray-400">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="font-medium">Simulation ID:</div>
+                    <div className="font-mono">{deploymentScenario.id}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Generated:</div>
+                    <div>{new Date(deploymentScenario.timestamp).toLocaleString()}</div>
                   </div>
                 </div>
               </div>
