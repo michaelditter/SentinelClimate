@@ -35,7 +35,7 @@ import PerformanceMetrics from './agents/PerformanceMetrics';
 import ScenarioGenerator from './simulation/ScenarioGenerator';
 import BeforeAfterComparison from './simulation/BeforeAfterComparison';
 import EconomicCalculator from './simulation/EconomicCalculator';
-import CountyDeepDive from './CountyDeepDive';
+import EnhancedCountyDeepDive from './EnhancedCountyDeepDive';
 import RealTimeKPIs from './RealTimeKPIs';
 import CountyProjections from './CountyProjections';
 
@@ -582,7 +582,7 @@ const SentinelAI: React.FC = () => {
 
       case 'county-analysis':
         return (
-          <CountyDeepDive 
+          <EnhancedCountyDeepDive 
             selectedCounty={selectedCounty || { fips: '48201', name: 'Harris County' }}
             realTimeData={realTimeData}
           />
