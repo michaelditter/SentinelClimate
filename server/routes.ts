@@ -2222,6 +2222,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Initialize OpenAI client
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  // Social Listening search endpoint
+  app.post("/api/social-listening/search", async (req, res) => {
+    try {
+      const { query, sectionId } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'OpenAI API key not configured' });
+      }
+
+      // Use OpenAI to simulate web search and analysis
+      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      const searchPrompt = `You are analyzing social media and web content for crisis detection. 
+
+Search Query: "${query}"
+Section: ${sectionId}
+
+Simulate realistic search results that would come from this query related to heat emergencies, healthcare strain, or infrastructure issues. Return realistic but fictional data in this exact JSON format:
+
+{
+  "id": "unique_search_id",
+  "query": "${query}",
+  "timestamp": "${new Date().toISOString()}",
+  "results": [
+    {
+      "title": "Realistic news headline or social media post title",
+      "url": "https://example-news-site.com/article",
+      "snippet": "Brief excerpt that shows crisis indicators or public concern",
+      "relevanceScore": 0.85,
+      "riskLevel": "HIGH"
+    }
+  ],
+  "alertLevel": "HIGH",
+  "summary": "Brief AI analysis of what these results indicate about crisis conditions"
+}
+
+Make the results reflect current heat emergency concerns, infrastructure stress, or healthcare system strain. Use realistic but fictional news sources, social media platforms, and emergency management communications. Risk levels should be: CRITICAL, HIGH, MODERATE, or WATCH.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a crisis detection AI that analyzes web search results for emergency management. Return only valid JSON with realistic but fictional search results."
+          },
+          {
+            role: "user",
+            content: searchPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1500,
+        temperature: 0.7
+      });
+
+      const searchResults = JSON.parse(completion.choices[0].message.content);
+      
+      // Add some randomization to make results feel more dynamic
+      const alertLevels = ['CRITICAL', 'HIGH', 'MODERATE', 'WATCH'];
+      const randomizedResults = {
+        ...searchResults,
+        id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date().toISOString(),
+        alertLevel: alertLevels[Math.floor(Math.random() * alertLevels.length)],
+        results: searchResults.results.map((result: any) => ({
+          ...result,
+          relevanceScore: Math.max(0.6, Math.random()),
+          riskLevel: alertLevels[Math.floor(Math.random() * alertLevels.length)]
+        }))
+      };
+
+      res.json(randomizedResults);
+    } catch (error) {
+      console.error('Social listening search error:', error);
+      res.status(500).json({ 
+        error: 'Search analysis failed',
+        id: `${req.body.sectionId}-${Date.now()}`,
+        query: req.body.query,
+        timestamp: new Date().toISOString(),
+        results: [],
+        alertLevel: 'WATCH',
+        summary: 'Search temporarily unavailable - please check API configuration'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
