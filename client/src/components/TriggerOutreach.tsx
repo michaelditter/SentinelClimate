@@ -377,37 +377,60 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                 </div>
               )}
 
-              {agentAnalysis && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold">Agent Analysis Results</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(agentAnalysis.agentRecommendations).map(([agentName, recommendation]: [string, any]) => {
-                      const agent = agents.find(a => a.name === agentName);
-                      const IconComponent = agent?.icon || MessageSquare;
-                      
-                      return (
-                        <Card key={agentName} className="border-l-4 border-l-blue-500">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm flex items-center">
-                              <IconComponent className="h-4 w-4 mr-2" />
-                              {agentName}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2 text-sm">
-                              <div><strong>Assessment:</strong> {recommendation.assessment}</div>
-                              <div><strong>Action:</strong> {recommendation.action}</div>
-                              <div className="flex justify-between items-center">
-                                <span><strong>Confidence:</strong></span>
-                                <Badge variant="outline">{recommendation.confidence}%</Badge>
+              {agentAnalysis && agentAnalysis.agentRecommendations && (
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+                      Agent Analysis Results - {agentAnalysis.riskLevel} Risk Level
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(agentAnalysis.agentRecommendations).map(([agentName, recommendation]: [string, any]) => {
+                        const agent = agents.find(a => a.name === agentName);
+                        const IconComponent = agent?.icon || MessageSquare;
+                        
+                        return (
+                          <Card key={agentName} className="border-l-4 border-l-blue-500">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm flex items-center">
+                                <IconComponent className="h-4 w-4 mr-2" />
+                                {agentName} Agent
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2 text-sm">
+                                <div><strong>Assessment:</strong> {recommendation.assessment}</div>
+                                <div><strong>Action:</strong> {recommendation.action}</div>
+                                <div><strong>Data Source:</strong> {recommendation.dataSource}</div>
+                                <div className="flex justify-between items-center">
+                                  <span><strong>Confidence:</strong></span>
+                                  <Badge variant="outline">{recommendation.confidence}%</Badge>
+                                </div>
                               </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                    
+                    {agentAnalysis.emergencyContacts && (
+                      <div className="mt-4">
+                        <h4 className="font-bold mb-2">Emergency Contacts Identified</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          {agentAnalysis.emergencyContacts.map((contact: any, index: number) => (
+                            <div key={index} className="text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                              <div className="font-medium">{contact.role}</div>
+                              <div>{contact.name}</div>
+                              <div className="text-blue-600">{contact.phone}</div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
             </CardContent>
           </Card>

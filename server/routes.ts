@@ -411,34 +411,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`Initiating emergency call to ${targetPhone} from ${agentType} agent`);
           
-          // Generate AI voice using ElevenLabs if available
-          let audioUrl = null;
+          // Use ElevenLabs voice agent for AI-powered calling
           if (elevenlabsApiKey) {
             try {
-              const voiceResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
+              // Make outbound call using ElevenLabs voice agent
+              const agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversations', {
                 method: 'POST',
                 headers: {
-                  'Accept': 'audio/mpeg',
                   'Content-Type': 'application/json',
                   'xi-api-key': elevenlabsApiKey
                 },
                 body: JSON.stringify({
-                  text: message,
-                  model_id: 'eleven_monolingual_v1',
-                  voice_settings: {
-                    stability: 0.5,
-                    similarity_boost: 0.5
-                  }
+                  agent_id: '***REMOVED-AGENT-ID***',
+                  agent_phone_number_id: '***REMOVED-PHONE-ID***',
+                  to_number: targetPhone,
+                  initial_message: `Hello ${targetName}, this is the Sentinel AI ${agentType} agent calling with an important climate health alert for your area. ${message.replace(/°F/g, 'degrees Fahrenheit')}`
                 })
               });
 
-              if (voiceResponse.ok) {
-                console.log('ElevenLabs voice generation successful');
-                // For real implementation, you would upload the audio and get a URL
-                // For now, we'll use Twilio's text-to-speech
+              if (agentCallResponse.ok) {
+                const callData = await agentCallResponse.json();
+                console.log(`ElevenLabs agent call initiated successfully: ${callData.conversation_id}`);
+                res.json({
+                  success: true,
+                  conversationId: callData.conversation_id,
+                  message: 'AI voice agent call initiated successfully',
+                  agentType,
+                  targetPhone,
+                  targetName,
+                  communicationScript: message,
+                  mode: 'ai-voice'
+                });
+                return;
+              } else {
+                console.log('ElevenLabs agent call failed, falling back to Twilio');
               }
-            } catch (voiceError) {
-              console.error('ElevenLabs API error:', voiceError);
+            } catch (agentError) {
+              console.error('ElevenLabs agent API error:', agentError);
+              console.log('Falling back to Twilio text-to-speech');
             }
           }
           
