@@ -99,13 +99,13 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
       id: 'neches_river_flooding',
       name: 'Neches River Flooding - East Texas',
       county: 'Anderson, Cherokee, Angelina, Trinity, Polk Counties, TX',
-      severity: 'HIGH',
+      severity: 'MODERATE',
       description: 'Active flooding event affecting rural East Texas counties with Neches River at 16.7 feet (0.7 feet above flood stage)',
       triggers: ['River stage >16.0 feet (flood stage)', 'Rural population displacement', 'Emergency shelter activation needed'],
       projectedImpact: {
-        deaths: 3,
-        hospitalizations: 45,
-        economicImpact: '$125M',
+        deaths: 1,
+        hospitalizations: 12,
+        economicImpact: '$15M',
         affectedPopulation: 8500
       }
     }
