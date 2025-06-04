@@ -344,6 +344,9 @@ const SentinelAI: React.FC = () => {
 
   const renderView = () => {
     switch (selectedView) {
+      case 'weather-sentinel-mcp':
+        return <WeatherSentinelMCP />;
+      
       case 'mission-control':
         return (
           <div className="space-y-6">
@@ -561,6 +564,7 @@ const SentinelAI: React.FC = () => {
   };
 
   const navigationItems = [
+    { key: 'weather-sentinel-mcp', icon: Zap, label: 'Weather Sentinel MCP', emoji: '🛡️' },
     { key: 'mission-control', icon: Target, label: 'Mission Control', emoji: '🎯' },
     { key: 'risk-assessment', icon: Map, label: 'Risk Assessment', emoji: '🗺️' },
     { key: 'agent-coordination', icon: Bot, label: 'Agent Coordination', emoji: '🤖' },
