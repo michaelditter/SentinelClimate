@@ -356,9 +356,18 @@ const SocialListening: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {section.results.length > 0 && (
+                    {/* Only show badge when there are genuine crisis indicators */}
+                    {section.results.length > 0 && section.results.some(result => 
+                      result.alertLevel !== 'NONE' && 
+                      result.results.length > 0 &&
+                      (!result.summary || !result.summary.includes('No relevant'))
+                    ) && (
                       <Badge variant="outline" className="text-green-400 border-green-400">
-                        {section.results.length} results
+                        {section.results.filter(result => 
+                          result.alertLevel !== 'NONE' && 
+                          result.results.length > 0 &&
+                          (!result.summary || !result.summary.includes('No relevant'))
+                        ).length} crisis indicators
                       </Badge>
                     )}
                     <Button
@@ -504,11 +513,21 @@ const SocialListening: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <div className={`w-2 h-2 rounded-full ${
                       section.isRunning ? 'bg-yellow-400 animate-pulse' : 
-                      section.results.length > 0 ? 'bg-green-400' : 'bg-gray-500'
+                      section.results.length > 0 && section.results.some(result => 
+                        result.alertLevel !== 'NONE' && 
+                        result.results.length > 0 &&
+                        (!result.summary || !result.summary.includes('No relevant'))
+                      ) ? 'bg-red-400' : 
+                      section.lastRun ? 'bg-green-400' : 'bg-gray-500'
                     }`} />
                     <span className="text-xs text-gray-400">
                       {section.isRunning ? 'Scanning...' : 
-                       section.results.length > 0 ? 'Active monitoring' : 'Standby'}
+                       section.results.length > 0 && section.results.some(result => 
+                        result.alertLevel !== 'NONE' && 
+                        result.results.length > 0 &&
+                        (!result.summary || !result.summary.includes('No relevant'))
+                       ) ? 'Crisis detected' :
+                       section.lastRun ? 'All clear' : 'Standby'}
                     </span>
                   </div>
                   
