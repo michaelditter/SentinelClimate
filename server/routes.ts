@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Weather data proxy endpoint
