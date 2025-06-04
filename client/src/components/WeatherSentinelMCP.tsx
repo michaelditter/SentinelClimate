@@ -1292,7 +1292,7 @@ export default function WeatherSentinelMCP() {
                     <div className="text-sm">• Field commanders deployed to sectors</div>
                     <div className="text-sm">• Operational monitoring established</div>
                     <div className="text-sm">• Hospital capacity tracking active</div>
-                    <div className="text-sm">• 15-minute predictive deployment complete</div>
+                    <div className="text-sm">• Multi-agent deployment successful</div>
                     <div className="text-sm">• 4.78M residents protected proactively</div>
                     
                     <div className="bg-red-900/30 rounded-lg p-4 mt-4">
@@ -1301,10 +1301,7 @@ export default function WeatherSentinelMCP() {
                         <div className="text-green-400 text-sm">✅ 8 Cooling Centers opened</div>
                         <div className="text-green-400 text-sm">✅ 12 EMS Units staged</div>
                         <div className="text-green-400 text-sm">✅ 47 Personnel deployed</div>
-                        <div className="text-green-400 text-sm">✅ 15 minutes response time</div>
-                      </div>
-                      <div className="text-center mt-3 text-base text-yellow-300">
-                        (vs 2+ hours traditional reactive response)
+                        <div className="text-green-400 text-sm">✅ Rapid response coordination</div>
                       </div>
                     </div>
                     
