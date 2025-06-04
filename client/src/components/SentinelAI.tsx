@@ -38,6 +38,7 @@ import AgentCommunication from './agents/AgentCommunication';
 import DecisionFlow from './agents/DecisionFlow';
 import PerformanceMetrics from './agents/PerformanceMetrics';
 import ScenarioGenerator from './simulation/ScenarioGenerator';
+import BeforeAfterComparison from './simulation/BeforeAfterComparison';
 
 import EnhancedCountyDeepDive from './EnhancedCountyDeepDive';
 import RealTimeKPIs from './RealTimeKPIs';
@@ -731,6 +732,9 @@ const SentinelAI: React.FC = () => {
                 )}
               </div>
             </div>
+            
+            {/* Before/After Comparison Analysis */}
+            <BeforeAfterComparison result={currentResult} />
           </div>
         );
 
