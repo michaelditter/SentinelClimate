@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown, Activity, Zap, Thermometer, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, Activity, Zap, Thermometer, Users, MapPin } from 'lucide-react';
 
 interface KPIData {
   grid: {
@@ -43,7 +44,31 @@ interface RealTimeKPIsProps {
   data?: any;
 }
 
+type CountyLocation = 'harris-tx' | 'maricopa-az' | 'los-angeles-ca';
+
+const COUNTY_OPTIONS = {
+  'harris-tx': { 
+    name: 'Harris County, TX', 
+    shortName: 'Harris County',
+    gridOperator: 'ERCOT',
+    weatherStation: 'KHOU'
+  },
+  'maricopa-az': { 
+    name: 'Maricopa County, AZ', 
+    shortName: 'Maricopa County',
+    gridOperator: 'APS/SRP',
+    weatherStation: 'KPHX'
+  },
+  'los-angeles-ca': { 
+    name: 'Los Angeles County, CA', 
+    shortName: 'LA County',
+    gridOperator: 'CAISO',
+    weatherStation: 'KLAX'
+  }
+};
+
 const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
+  const [selectedCounty, setSelectedCounty] = useState<CountyLocation>('harris-tx');
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
@@ -51,11 +76,11 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
     fetchRealTimeKPIs();
     const interval = setInterval(fetchRealTimeKPIs, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedCounty]);
 
   const fetchRealTimeKPIs = async () => {
     try {
-      const response = await fetch('/api/real-time-kpis');
+      const response = await fetch(`/api/real-time-kpis?county=${selectedCounty}`);
       const data = await response.json();
       setKpiData(data);
       setLastUpdate(new Date());
@@ -86,21 +111,42 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Real-Time System Status</h2>
-        <div className="text-sm text-gray-500">
-          Last updated: {lastUpdate.toLocaleTimeString()}
+        <div className="flex items-center space-x-4">
+          <h2 className="text-2xl font-bold">Real-Time System Status</h2>
+          <div className="flex items-center space-x-2 text-sm text-blue-600">
+            <MapPin className="h-4 w-4" />
+            <span className="font-medium">{COUNTY_OPTIONS[selectedCounty].name}</span>
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="flex space-x-1">
+            {(Object.keys(COUNTY_OPTIONS) as CountyLocation[]).map((county) => (
+              <Button
+                key={county}
+                size="sm"
+                variant={selectedCounty === county ? "default" : "outline"}
+                onClick={() => setSelectedCounty(county)}
+                className="text-xs"
+              >
+                {COUNTY_OPTIONS[county].shortName}
+              </Button>
+            ))}
+          </div>
+          <div className="text-sm text-gray-500">
+            Last updated: {lastUpdate.toLocaleTimeString()}
+          </div>
         </div>
       </div>
 
       {/* Primary KPIs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        {/* ERCOT Grid Status */}
+        {/* Grid Status */}
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
               <Zap className="h-4 w-4 mr-2" />
-              ERCOT Grid Status
+              {COUNTY_OPTIONS[selectedCounty].gridOperator} Grid Status
             </CardTitle>
           </CardHeader>
           <CardContent>
