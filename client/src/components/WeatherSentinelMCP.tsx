@@ -813,7 +813,7 @@ export default function WeatherSentinelMCP() {
             <Button 
               onClick={() => {
                 if (predictions) {
-                  alert(`AI Predictions:\n\nExpected ED Visits: +${predictions.edVisits} (${predictions.timeline})\nEMS Surge: +${predictions.emsIncrease}%\nCooling Centers: ${predictions.coolingCenters} activated\nEstimated Cost Savings: ${predictions.costSavings}`);
+                  alert(`AI Predictions:\n\nExpected ED Visits: +${predictions.healthcare.edVisits.surge} surge (${predictions.healthcare.edVisits.peakTime})\nEMS Increase: +${predictions.healthcare.emsIncrease}%\nCooling Centers: ${predictions.resources.coolingCentersNeeded} needed\nCost Savings: ${predictions.economics.preventiveCostSavings}`);
                 }
               }}
               className="relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-10 py-4 text-xl font-bold rounded-2xl border border-purple-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
@@ -836,7 +836,7 @@ export default function WeatherSentinelMCP() {
                   <div className="text-sm opacity-80 mb-3">{agent.description}</div>
                   {agent.phase && (
                     <div className="text-xs text-cyan-300 mb-2 italic">
-                      {agent.phase}
+                      {agent.phase.description}
                     </div>
                   )}
                   <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
@@ -862,7 +862,7 @@ export default function WeatherSentinelMCP() {
         </div>
 
         {/* Enhanced Weather Alerts */}
-        {weatherData && weatherData.alerts.length > 0 && (
+        {environmentalData && environmentalData.alerts.length > 0 && (
           <div className="relative group mb-8">
             <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-2xl blur opacity-40"></div>
             <Card className="relative bg-black/40 backdrop-blur-xl border border-red-500/30 rounded-2xl">
@@ -874,7 +874,7 @@ export default function WeatherSentinelMCP() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {weatherData.alerts.map((alert) => (
+                  {environmentalData.alerts.map((alert) => (
                     <div 
                       key={alert.id}
                       className="p-4 rounded-xl bg-red-900/40 border border-red-500/40 transform hover:scale-105 transition-all duration-300"
@@ -907,25 +907,25 @@ export default function WeatherSentinelMCP() {
               <CardContent>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="text-center p-4 rounded-xl bg-blue-900/30 border border-blue-500/30">
-                    <div className="text-3xl font-bold text-blue-300">+{predictions.edVisits}</div>
+                    <div className="text-3xl font-bold text-blue-300">+{predictions.healthcare.edVisits.surge}</div>
                     <div className="text-sm text-blue-200">Expected ED Visits</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-orange-900/30 border border-orange-500/30">
-                    <div className="text-3xl font-bold text-orange-300">+{predictions.emsIncrease}%</div>
+                    <div className="text-3xl font-bold text-orange-300">+{predictions.healthcare.emsIncrease}%</div>
                     <div className="text-sm text-orange-200">EMS Call Surge</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-green-900/30 border border-green-500/30">
-                    <div className="text-3xl font-bold text-green-300">{predictions.coolingCenters}</div>
+                    <div className="text-3xl font-bold text-green-300">{predictions.resources.coolingCentersNeeded}</div>
                     <div className="text-sm text-green-200">Cooling Centers</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-purple-900/30 border border-purple-500/30">
-                    <div className="text-3xl font-bold text-purple-300">{predictions.costSavings}</div>
+                    <div className="text-3xl font-bold text-purple-300">{predictions.economics.preventiveCostSavings}</div>
                     <div className="text-sm text-purple-200">Cost Savings</div>
                   </div>
                 </div>
                 <div className="mt-6 text-center">
                   <div className="text-lg font-semibold text-green-400">
-                    Estimated Cost Savings: {predictions.costSavings}
+                    Estimated Cost Savings: {predictions.economics.preventiveCostSavings}
                   </div>
                 </div>
               </CardContent>
