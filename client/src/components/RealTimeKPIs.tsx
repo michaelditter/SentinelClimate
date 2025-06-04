@@ -213,7 +213,7 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
               <Thermometer className="h-4 w-4 mr-2" />
-              Heat Risk (NWS)
+              Heat Risk ({COUNTY_OPTIONS[selectedCounty].weatherStation})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -275,22 +275,25 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
-              <div className="font-medium">ERCOT Grid Data</div>
+              <div className="font-medium">{COUNTY_OPTIONS[selectedCounty].gridOperator} Grid Data</div>
               <div className="text-gray-600">Real-time load: {kpiData.grid.currentLoad.toLocaleString()} MW</div>
               <div className="text-gray-600">Updated: {kpiData.grid.lastUpdate}</div>
             </div>
             <div>
               <div className="font-medium">NPI Provider Registry</div>
+              <div className="text-gray-600">Location: {COUNTY_OPTIONS[selectedCounty].name}</div>
               <div className="text-gray-600">Active providers: {kpiData.providers.totalActive.toLocaleString()}</div>
               <div className="text-gray-600">Last sync: {kpiData.providers.lastSync}</div>
             </div>
             <div>
               <div className="font-medium">NWS Weather Service</div>
+              <div className="text-gray-600">Station: {COUNTY_OPTIONS[selectedCounty].weatherStation}</div>
               <div className="text-gray-600">Forecast horizon: {kpiData.weather.daysOut} days</div>
               <div className="text-gray-600">Next update: {kpiData.weather.nextUpdate}</div>
             </div>
             <div>
               <div className="font-medium">CDC Health Surveillance</div>
+              <div className="text-gray-600">County: {COUNTY_OPTIONS[selectedCounty].shortName}</div>
               <div className="text-gray-600">Reporting facilities: {kpiData.healthcare.reportingFacilities}</div>
               <div className="text-gray-600">Data lag: {kpiData.healthcare.dataLag} hours</div>
             </div>
