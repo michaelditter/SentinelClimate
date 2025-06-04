@@ -789,7 +789,7 @@ const SentinelAI: React.FC = () => {
       subtitle: 'Geographic heat risk analysis and resource deployment'
     },
     'agent-coordination': {
-      title: 'Agent Coordination',
+      title: 'Agent Coordination Simulation',
       subtitle: 'Multi-agent AI system coordination and communication'
     },
     'crisis-simulation': {
