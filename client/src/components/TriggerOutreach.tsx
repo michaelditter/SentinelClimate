@@ -273,10 +273,10 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
 
               {selectedScenario && (
                 <div className="space-y-4">
-                  <Card className="bg-gray-50">
+                  <Card className="bg-gray-50 dark:bg-gray-800">
                     <CardContent className="pt-4">
-                      <h3 className="font-bold text-lg mb-2">{selectedScenario.name}</h3>
-                      <p className="text-gray-700 mb-3">{selectedScenario.description}</p>
+                      <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-gray-100">{selectedScenario.name}</h3>
+                      <p className="text-gray-700 dark:text-gray-300 mb-3">{selectedScenario.description}</p>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -494,8 +494,8 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                   const IconComponent = agent.icon;
                   return (
                     <div key={agent.id} className="flex items-start space-x-4">
-                      <div className={`p-3 rounded-full bg-${agent.color}-100`}>
-                        <IconComponent className={`h-6 w-6 text-${agent.color}-600`} />
+                      <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <IconComponent className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-lg">{agent.name}</h3>
