@@ -66,13 +66,21 @@ const ResourceMarkers: React.FC<ResourceMarkersProps> = ({ deployments }) => {
           <div className="mb-3 text-xs text-gray-400">
             {deployment.county.name} - {deployment.county.isRural ? 'Rural' : 'Urban'} Response
           </div>
+          <div className="mb-3 p-2 bg-gray-700 rounded text-xs">
+            <div className="font-medium text-white">Status: {deployment.deployment.deploymentStatus?.toUpperCase()}</div>
+            <div className="text-gray-300">{deployment.deployment.statusDescription}</div>
+          </div>
+          
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <Truck className="h-4 w-4 text-blue-400" />
                 <span className="text-sm">Mobile Units</span>
               </div>
-              <span className="font-bold text-blue-400">{deployment.deployment.mobileUnits} active</span>
+              <span className="font-bold text-blue-400">
+                {deployment.deployment.mobileUnits} {deployment.deployment.deploymentStatus === 'standby' ? 'on standby' : 
+                deployment.deployment.deploymentStatus === 'deployed' ? 'deployed' : 'available'}
+              </span>
             </div>
             
             <div className="flex justify-between items-center">
@@ -80,7 +88,10 @@ const ResourceMarkers: React.FC<ResourceMarkersProps> = ({ deployments }) => {
                 <Building className="h-4 w-4 text-green-400" />
                 <span className="text-sm">Emergency Shelters</span>
               </div>
-              <span className="font-bold text-green-400">{deployment.deployment.emergencyShelters} open</span>
+              <span className="font-bold text-green-400">
+                {deployment.deployment.emergencyShelters} {deployment.deployment.deploymentStatus === 'standby' ? 'ready' : 
+                deployment.deployment.deploymentStatus === 'deployed' ? 'open' : 'available'}
+              </span>
             </div>
             
             <div className="flex justify-between items-center">
@@ -88,7 +99,10 @@ const ResourceMarkers: React.FC<ResourceMarkersProps> = ({ deployments }) => {
                 <Users className="h-4 w-4 text-purple-400" />
                 <span className="text-sm">Medical Personnel</span>
               </div>
-              <span className="font-bold text-purple-400">{deployment.deployment.medicalPersonnel} deployed</span>
+              <span className="font-bold text-purple-400">
+                {deployment.deployment.medicalPersonnel} {deployment.deployment.deploymentStatus === 'standby' ? 'on standby' : 
+                deployment.deployment.deploymentStatus === 'deployed' ? 'deployed' : 'available'}
+              </span>
             </div>
             
             <div className="flex justify-between items-center">
@@ -96,7 +110,10 @@ const ResourceMarkers: React.FC<ResourceMarkersProps> = ({ deployments }) => {
                 <Package className="h-4 w-4 text-orange-400" />
                 <span className="text-sm">Emergency Kits</span>
               </div>
-              <span className="font-bold text-orange-400">{(deployment.deployment.emergencyKits / 1000).toFixed(1)}K distributed</span>
+              <span className="font-bold text-orange-400">
+                {deployment.deployment.emergencyKits} {deployment.deployment.deploymentStatus === 'standby' ? 'prepared' : 
+                deployment.deployment.deploymentStatus === 'deployed' ? 'distributed' : 'available'}
+              </span>
             </div>
             
             {/* Specialized Resources for Rural Areas */}

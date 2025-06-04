@@ -26,6 +26,8 @@ export interface ResourceDeployment {
   emergencyShelters: number;
   medicalPersonnel: number;
   emergencyKits: number;
+  deploymentStatus: 'available' | 'standby' | 'staged' | 'deployed';
+  statusDescription: string;
   specializedResources: {
     highWaterRescue?: number;
     helicopterUnits?: number;
@@ -78,13 +80,21 @@ export function calculateResourceDeployment(
   let medicalPersonnel = Math.ceil(county.population * ratios.medicalPerCapita * multiplier);
   let emergencyKits = Math.ceil(scenario.vulnerablePopulation * ratios.kitsPerVulnerable * multiplier);
 
-  // Rural-specific adjustments
+  // Rural-specific adjustments with proper flood watch scaling
   if (county.isRural) {
-    // Rural areas need fewer but more strategically placed resources
-    mobileUnits = Math.max(2, Math.min(mobileUnits, 5)); // 2-5 units max for rural
-    emergencyShelters = Math.max(1, Math.min(emergencyShelters, 3)); // 1-3 shelters max
-    medicalPersonnel = Math.max(3, Math.min(medicalPersonnel, 10)); // 3-10 personnel
-    emergencyKits = Math.min(emergencyKits, 1000); // Cap at 1000 for rural areas
+    if (scenario.scenarioType === 'flood') {
+      // Specific rural flood watch deployment numbers
+      mobileUnits = scenario.severity === 'LOW' ? 2 : 3; // 2-3 mobile emergency units
+      emergencyShelters = scenario.severity === 'LOW' ? 1 : 2; // 1-2 emergency shelters
+      medicalPersonnel = Math.min(Math.max(5, medicalPersonnel), 7); // 5-7 medical personnel
+      emergencyKits = Math.min(Math.max(500, emergencyKits), 800); // 500-800 emergency kits
+    } else {
+      // General rural adjustments for other scenarios
+      mobileUnits = Math.max(2, Math.min(mobileUnits, 5));
+      emergencyShelters = Math.max(1, Math.min(emergencyShelters, 3));
+      medicalPersonnel = Math.max(3, Math.min(medicalPersonnel, 10));
+      emergencyKits = Math.min(emergencyKits, 1000);
+    }
   }
 
   // Urban caps (prevent over-deployment)
@@ -115,11 +125,31 @@ export function calculateResourceDeployment(
     // Focus on cooling centers and medical support
   }
 
+  // Determine deployment status based on scenario severity and type
+  let deploymentStatus: 'available' | 'standby' | 'staged' | 'deployed';
+  let statusDescription: string;
+
+  if (scenario.scenarioType === 'flood' && scenario.severity === 'LOW') {
+    deploymentStatus = 'standby';
+    statusDescription = 'Resources on standby for flood watch - ready for rapid deployment if conditions escalate';
+  } else if (scenario.severity === 'MODERATE' || scenario.severity === 'HIGH') {
+    deploymentStatus = 'staged';
+    statusDescription = 'Resources staged and positioned for immediate deployment';
+  } else if (scenario.severity === 'CRITICAL' || scenario.severity === 'EXTREME') {
+    deploymentStatus = 'deployed';
+    statusDescription = 'Resources actively deployed in response to emergency conditions';
+  } else {
+    deploymentStatus = 'available';
+    statusDescription = 'Resources available and maintained in ready state';
+  }
+
   return {
     mobileUnits,
     emergencyShelters,
     medicalPersonnel,
     emergencyKits,
+    deploymentStatus,
+    statusDescription,
     specializedResources
   };
 }
@@ -189,8 +219,12 @@ export function generateDeploymentScenario(
   let scenarioType: 'heat' | 'flood' | 'combined' = 'heat';
   let severity: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | 'EXTREME' = 'MODERATE';
   
-  // Determine scenario type
-  if (floodData?.active && weatherData?.heatIndex > 95) {
+  // Determine scenario type based on county characteristics
+  if (county.isRural && county.hasFloodRisk) {
+    // Rural counties with flood risk default to flood watch scenarios
+    scenarioType = 'flood';
+    severity = 'LOW'; // Flood watch is typically LOW severity until escalation
+  } else if (floodData?.active && weatherData?.heatIndex > 95) {
     scenarioType = 'combined';
   } else if (floodData?.active) {
     scenarioType = 'flood';
