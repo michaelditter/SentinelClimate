@@ -1196,8 +1196,8 @@ export default function WeatherSentinelMCP() {
 
         {/* Emergency Simulation Full-Screen Overlay */}
         {currentAgentPopup && (
-          <div className="fixed inset-0 bg-black/98 backdrop-blur-lg z-[10000] flex items-center justify-end pr-16">
-            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-5xl w-full shadow-2xl border-4 text-right ${
+          <div className="fixed top-20 bottom-0 left-80 right-0 bg-black/98 backdrop-blur-lg z-[10000] flex items-center justify-center p-8">
+            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-4xl w-full shadow-2xl border-4 text-right ${
               currentAgentPopup === 'SENTINEL' ? 'border-green-500' :
               currentAgentPopup === 'MEDIC' ? 'border-blue-500' :
               currentAgentPopup === 'DISPATCHER' ? 'border-orange-500' :
