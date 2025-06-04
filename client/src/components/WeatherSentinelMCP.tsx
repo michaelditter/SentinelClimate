@@ -749,7 +749,7 @@ export default function WeatherSentinelMCP() {
             <div className="flex items-center justify-center space-x-8 mt-4 text-sm text-cyan-300">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span>Real-Time NWS Integration</span>
+                <span>MCP for Real-Time Hospital Data </span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
