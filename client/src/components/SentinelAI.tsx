@@ -715,10 +715,6 @@ const SentinelAI: React.FC = () => {
                         <div className="text-sm text-gray-400">ED Visits</div>
                       </div>
                       <div className="text-center p-4 bg-gray-700 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-400">${currentResult.outcomes.actual.economicImpact.toFixed(1)}M</div>
-                        <div className="text-sm text-gray-400">Economic Impact</div>
-                      </div>
-                      <div className="text-center p-4 bg-gray-700 rounded-lg">
                         <div className="text-2xl font-bold text-blue-400">{currentResult.outcomes.actual.responseTime}h</div>
                         <div className="text-sm text-gray-400">Duration</div>
                       </div>
