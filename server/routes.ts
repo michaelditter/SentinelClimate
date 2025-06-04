@@ -414,23 +414,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use ElevenLabs voice agent for AI-powered calling
           if (elevenlabsApiKey) {
             try {
-              // Make outbound call using ElevenLabs conversational agent - CORRECTED ENDPOINT
-              const agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***/phone/outbound-call', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${elevenlabsApiKey}`
-                },
-                body: JSON.stringify({
-                  agent_phone_number_id: '***REMOVED-PHONE-ID***',
-                  to_number: targetPhone.startsWith('+') ? targetPhone : `+1${targetPhone.replace(/\D/g, '')}`,
-                  metadata: {
-                    caller_name: targetName,
-                    alert_type: 'heat_emergency',
-                    timestamp: new Date().toISOString()
+              const formattedPhone = targetPhone.startsWith('+') ? targetPhone : `+1${targetPhone.replace(/\D/g, '')}`;
+              console.log('Attempting ElevenLabs call with formatted phone:', formattedPhone);
+              
+              // Try multiple ElevenLabs endpoints in order of preference
+              let agentCallResponse = null;
+              let lastError = null;
+              
+              // Option 1: Agent-specific outbound call endpoint
+              try {
+                agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***/phone/outbound-call', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${elevenlabsApiKey}`
+                  },
+                  body: JSON.stringify({
+                    agent_phone_number_id: '***REMOVED-PHONE-ID***',
+                    to_number: formattedPhone,
+                    metadata: {
+                      caller_name: targetName,
+                      alert_type: 'heat_emergency',
+                      timestamp: new Date().toISOString()
+                    }
+                  })
+                });
+                if (agentCallResponse.ok) {
+                  console.log('Option 1 (agent-specific) succeeded');
+                } else {
+                  throw new Error(`Option 1 failed: ${agentCallResponse.status}`);
+                }
+              } catch (error) {
+                lastError = error;
+                console.log('Option 1 failed, trying Option 2:', error.message);
+                
+                // Option 2: Direct phone API
+                try {
+                  agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone/outbound-call', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${elevenlabsApiKey}`
+                    },
+                    body: JSON.stringify({
+                      agent_id: '***REMOVED-AGENT-ID***',
+                      agent_phone_number_id: '***REMOVED-PHONE-ID***',
+                      to_number: formattedPhone
+                    })
+                  });
+                  if (agentCallResponse.ok) {
+                    console.log('Option 2 (direct phone API) succeeded');
+                  } else {
+                    throw new Error(`Option 2 failed: ${agentCallResponse.status}`);
                   }
-                })
-              });
+                } catch (error2) {
+                  lastError = error2;
+                  console.log('Option 2 failed, trying Option 3:', error2.message);
+                  
+                  // Option 3: Conversations with phone mode
+                  agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversations', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${elevenlabsApiKey}`
+                    },
+                    body: JSON.stringify({
+                      agent_id: '***REMOVED-AGENT-ID***',
+                      mode: 'phone',
+                      phone_config: {
+                        phone_number_id: '***REMOVED-PHONE-ID***',
+                        to_number: formattedPhone
+                      }
+                    })
+                  });
+                  if (!agentCallResponse.ok) {
+                    throw new Error(`All options failed. Last error: ${agentCallResponse.status}`);
+                  }
+                  console.log('Option 3 (conversations with phone mode) succeeded');
+                }
+              }
 
               if (agentCallResponse.ok) {
                 const callData = await agentCallResponse.json();
