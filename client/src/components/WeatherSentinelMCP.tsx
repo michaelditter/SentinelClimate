@@ -189,6 +189,9 @@ export default function WeatherSentinelMCP() {
   const [isLiveDemo, setIsLiveDemo] = useState(false);
   const [isEmergencyMode, setIsEmergencyMode] = useState(false);
   const [demoProgress, setDemoProgress] = useState(0);
+  const [showDemoPopup, setShowDemoPopup] = useState(false);
+  const [demoStep, setDemoStep] = useState(0);
+  const [showMassTextAlert, setShowMassTextAlert] = useState(false);
   const [agents, setAgents] = useState<AgentStatus[]>([
     {
       id: '1',
@@ -631,6 +634,106 @@ export default function WeatherSentinelMCP() {
     })));
   };
 
+  const startInteractiveDemo = () => {
+    setShowDemoPopup(true);
+    setDemoStep(1);
+    setIsEmergencyMode(true);
+    
+    // Step 1: Environmental Detection (3 seconds)
+    setTimeout(() => {
+      setEnvironmentalData(prev => prev ? {
+        ...prev,
+        temperature: 108,
+        heatIndex: 124,
+        threatLevel: 'CRITICAL',
+        alerts: [{
+          id: '1',
+          type: 'EXCESSIVE_HEAT',
+          severity: 'Extreme',
+          urgency: 'Immediate',
+          certainty: 'Observed',
+          title: 'EXTREME HEAT WARNING',
+          description: 'Life-threatening heat index of 124°F detected in Harris County. Immediate emergency response required.',
+          areas: ['Harris County', 'Fifth Ward', 'Third Ward'],
+          onset: new Date().toISOString(),
+          expires: new Date(Date.now() + 86400000).toISOString()
+        }]
+      } : null);
+      
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'SENTINEL' 
+          ? { 
+              ...agent, 
+              status: 'THREAT_DETECTED',
+              description: 'CRITICAL HEAT EMERGENCY DETECTED',
+              currentActivity: 'Heat Index: 124°F - EXTREME THREAT'
+            }
+          : agent
+      ));
+      
+      setDemoStep(2);
+    }, 3000);
+
+    // Step 2: Healthcare Analysis (4 seconds)
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'MEDIC' 
+          ? { 
+              ...agent, 
+              status: 'ANALYZING',
+              description: 'Healthcare Impact Assessment',
+              currentActivity: 'Vulnerable Population Analysis'
+            }
+          : agent
+      ));
+      setDemoStep(3);
+    }, 7000);
+
+    // Step 3: Resource Verification (4 seconds)
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'DISPATCHER' 
+          ? { 
+              ...agent, 
+              status: 'COORDINATING',
+              description: 'Resource Verification Complete',
+              currentActivity: '15 cooling centers ready, 28 EMS units available'
+            }
+          : agent
+      ));
+      setDemoStep(4);
+    }, 11000);
+
+    // Step 4: Field Deployment (5 seconds)
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'FIELD_OPS' 
+          ? { 
+              ...agent, 
+              status: 'DEPLOYING',
+              description: 'Emergency Deployment Active',
+              currentActivity: 'Dispatching units to Fifth Ward'
+            }
+          : agent
+      ));
+      setDemoStep(5);
+    }, 16000);
+
+    // Step 5: Mass Text Alert (3 seconds)
+    setTimeout(() => {
+      setShowMassTextAlert(true);
+      setDemoStep(6);
+    }, 21000);
+
+    // Auto-close demo
+    setTimeout(() => {
+      setShowDemoPopup(false);
+      setShowMassTextAlert(false);
+      setDemoStep(0);
+      setIsEmergencyMode(false);
+    }, 30000);
+  };
+
   const getThreatColor = (level: string) => {
     switch (level) {
       case 'CRITICAL': return 'bg-red-600 text-white border-red-500';
@@ -797,29 +900,14 @@ export default function WeatherSentinelMCP() {
           </div>
           
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
             <Button 
-              onClick={simulateHeatEmergency}
+              onClick={startInteractiveDemo}
               disabled={isLiveDemo}
-              className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-10 py-4 text-xl font-bold rounded-2xl border border-red-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
+              className="relative bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 px-12 py-5 text-xl font-bold rounded-2xl border border-orange-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
             >
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              SIMULATE HEAT EMERGENCY
-            </Button>
-          </div>
-          
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-            <Button 
-              onClick={() => {
-                if (predictions) {
-                  alert(`AI Predictions:\n\nExpected ED Visits: +${predictions.healthcare.edVisits.surge} surge (${predictions.healthcare.edVisits.peakTime})\nEMS Increase: +${predictions.healthcare.emsIncrease}%\nCooling Centers: ${predictions.resources.coolingCentersNeeded} needed\nCost Savings: ${predictions.economics.preventiveCostSavings}`);
-                }
-              }}
-              className="relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-10 py-4 text-xl font-bold rounded-2xl border border-purple-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              <TrendingUp className="w-5 h-5 mr-2" />
-              VIEW PREDICTIONS
+              <Zap className="w-6 h-6 mr-3" />
+              START EMERGENCY OPERATIONS DEMO
             </Button>
           </div>
         </div>
@@ -919,17 +1007,104 @@ export default function WeatherSentinelMCP() {
                     <div className="text-sm text-green-200">Cooling Centers</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-purple-900/30 border border-purple-500/30">
-                    <div className="text-3xl font-bold text-purple-300">{predictions.economics.preventiveCostSavings}</div>
-                    <div className="text-sm text-purple-200">Cost Savings</div>
-                  </div>
-                </div>
-                <div className="mt-6 text-center">
-                  <div className="text-lg font-semibold text-green-400">
-                    Estimated Cost Savings: {predictions.economics.preventiveCostSavings}
+                    <div className="text-3xl font-bold text-purple-300">{predictions.resources.personnelDeployment}</div>
+                    <div className="text-sm text-purple-200">Personnel Deployed</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Interactive Demo Pop-ups */}
+        {showDemoPopup && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-gradient-to-br from-gray-900 to-black border border-red-500/50 rounded-3xl p-8 max-w-2xl mx-4 shadow-2xl">
+              <div className="text-center">
+                <div className="text-6xl mb-4">
+                  {demoStep === 1 && '🔍'}
+                  {demoStep === 2 && '⚕️'}
+                  {demoStep === 3 && '📡'}
+                  {demoStep === 4 && '🚛'}
+                  {demoStep === 5 && '🚀'}
+                  {demoStep === 6 && '📱'}
+                </div>
+                
+                <h2 className="text-3xl font-bold mb-4 text-red-300">
+                  {demoStep === 1 && 'PHASE 1: ENVIRONMENTAL DETECTION'}
+                  {demoStep === 2 && 'PHASE 2: HEALTHCARE ANALYSIS'}
+                  {demoStep === 3 && 'PHASE 3: RESOURCE VERIFICATION'}
+                  {demoStep === 4 && 'PHASE 4: FIELD DEPLOYMENT'}
+                  {demoStep === 5 && 'PHASE 5: EMERGENCY COORDINATION'}
+                  {demoStep === 6 && 'PHASE 6: MASS ALERT SYSTEM'}
+                </h2>
+                
+                <div className="text-xl text-gray-300 mb-6">
+                  {demoStep === 1 && 'SENTINEL Agent detects extreme heat conditions: 124°F heat index in Harris County'}
+                  {demoStep === 2 && 'MEDIC Agent analyzing vulnerable populations: 45,000+ high-risk residents identified'}
+                  {demoStep === 3 && 'DISPATCHER Agent verifying resources: 15 cooling centers ready, 28 EMS units available'}
+                  {demoStep === 4 && 'FIELD_OPS Agent deploying emergency resources to vulnerable areas'}
+                  {demoStep === 5 && 'Multi-agent coordination complete: Emergency response fully activated'}
+                  {demoStep === 6 && 'Mass text alert system activated: Field commanders receiving deployment orders'}
+                </div>
+                
+                <div className="bg-black/40 rounded-xl p-4 text-sm text-cyan-300 font-mono">
+                  {demoStep === 1 && 'SYSTEM: Environmental monitoring active → Heat index threshold exceeded → Threat level: CRITICAL'}
+                  {demoStep === 2 && 'MEDIC: Vulnerable population analysis → Fifth Ward: 12,000 residents → Third Ward: 8,500 residents'}
+                  {demoStep === 3 && 'DISPATCH: Resource inventory complete → Cooling centers verified → EMS units positioned'}
+                  {demoStep === 4 && 'FIELD_OPS: Emergency deployment initiated → Units dispatching to high-risk areas'}
+                  {demoStep === 5 && 'COMMAND: Multi-agent coordination active → Real-time resource tracking enabled'}
+                  {demoStep === 6 && 'ALERT: Mass notification system active → Field commanders receiving specific orders'}
+                </div>
+                
+                <div className="mt-6">
+                  <div className="w-full bg-gray-700 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-red-500 to-orange-500 h-3 rounded-full transition-all duration-1000"
+                      style={{ width: `${(demoStep / 6) * 100}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-sm text-gray-400 mt-2">Step {demoStep} of 6</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mass Text Alert Simulation */}
+        {showMassTextAlert && (
+          <div className="fixed bottom-8 right-8 bg-gradient-to-br from-red-900 to-black border border-red-400 rounded-2xl p-6 max-w-md shadow-2xl z-50 animate-pulse">
+            <div className="flex items-center mb-4">
+              <div className="w-4 h-4 bg-red-500 rounded-full mr-3 animate-ping"></div>
+              <h3 className="text-lg font-bold text-red-300">EMERGENCY ALERT SENT</h3>
+            </div>
+            
+            <div className="bg-black/60 rounded-xl p-4 mb-4">
+              <div className="text-xs text-gray-400 mb-2">TO: Field Commander - Harris County Emergency Ops</div>
+              <div className="text-sm text-white font-medium">
+                IMMEDIATE DEPLOYMENT ORDER
+                <br /><br />
+                WHERE: Fifth Ward (zip 77026)
+                <br />
+                WHAT: Deploy 5 mobile cooling units, 8 EMS teams
+                <br />
+                WHEN: Immediate - Heat index 124°F
+                <br />
+                PRIORITY: Elderly residents, families with children
+                <br /><br />
+                Coordinate with local community centers.
+                <br />
+                Report status every 15 minutes.
+              </div>
+            </div>
+            
+            <div className="text-xs text-green-400">
+              ✓ Sent to 12 field commanders
+              <br />
+              ✓ SMS delivery confirmed
+              <br />
+              ✓ Emergency protocols activated
+            </div>
           </div>
         )}
       </div>
