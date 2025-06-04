@@ -194,6 +194,10 @@ export default function WeatherSentinelMCP() {
   const [demoStep, setDemoStep] = useState(0);
   const [showMassTextAlert, setShowMassTextAlert] = useState(false);
   const [showAlertsModal, setShowAlertsModal] = useState(false);
+  const [isEmergencySimulation, setIsEmergencySimulation] = useState(false);
+  const [currentAgentPopup, setCurrentAgentPopup] = useState<string | null>(null);
+  const [simulationStep, setSimulationStep] = useState(0);
+  const [simulationTimer, setSimulationTimer] = useState(0);
   const [agents, setAgents] = useState<AgentStatus[]>([
     {
       id: '1',
@@ -659,105 +663,78 @@ export default function WeatherSentinelMCP() {
     })));
   };
 
-  const startInteractiveDemo = () => {
-    setShowDemoPopup(true);
-    setDemoStep(1);
-    setIsEmergencyMode(true);
+  const startEmergencySimulation = () => {
+    setIsEmergencySimulation(true);
+    setSimulationStep(0);
+    setSimulationTimer(0);
     
-    // Step 1: Environmental Detection (3 seconds)
-    setTimeout(() => {
-      setEnvironmentalData(prev => prev ? {
-        ...prev,
-        temperature: 108,
-        heatIndex: 124,
-        threatLevel: 'CRITICAL',
-        alerts: [{
-          id: '1',
-          type: 'EXCESSIVE_HEAT',
-          severity: 'Extreme',
-          urgency: 'Immediate',
-          certainty: 'Observed',
-          title: 'EXTREME HEAT WARNING',
-          description: 'Life-threatening heat index of 124°F detected in Harris County. Immediate emergency response required.',
-          areas: ['Harris County', 'Fifth Ward', 'Third Ward'],
-          onset: new Date().toISOString(),
-          expires: new Date(Date.now() + 86400000).toISOString()
-        }]
-      } : null);
+    // Update environmental data to emergency conditions
+    setEnvironmentalData(prev => prev ? {
+      ...prev,
+      temperature: 105,
+      heatIndex: 108,
+      threatLevel: 'EXTREME',
+      conditions: 'Extreme Heat Warning',
+      alerts: [{
+        id: 'heat-emergency-001',
+        type: 'Heat Warning',
+        severity: 'Extreme',
+        urgency: 'Immediate',
+        certainty: 'Observed',
+        title: 'EXTREME HEAT WARNING',
+        description: 'Dangerous heat index values of 105-110°F expected. Heat stroke and heat exhaustion likely.',
+        areas: ['Harris County', 'Fifth Ward', 'Third Ward', 'East End'],
+        onset: new Date().toISOString(),
+        expires: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString()
+      }]
+    } : prev);
+
+    // Start agent sequence: SENTINEL -> MEDIC -> DISPATCHER -> COMMANDER
+    const agentSequence = ['SENTINEL', 'MEDIC', 'DISPATCHER', 'COMMANDER'];
+    const timings = [4000, 5000, 4000, 0]; // Last one stays open
+    
+    let currentStep = 0;
+    
+    const showAgent = (agentName: string, duration: number) => {
+      setCurrentAgentPopup(agentName);
       
-      setAgents(prev => prev.map(agent => 
-        agent.name === 'SENTINEL' 
-          ? { 
-              ...agent, 
-              status: 'THREAT_DETECTED',
-              description: 'CRITICAL HEAT EMERGENCY DETECTED',
-              currentActivity: 'Heat Index: 124°F - EXTREME THREAT'
-            }
-          : agent
-      ));
-      
-      setDemoStep(2);
-    }, 3000);
-
-    // Step 2: Healthcare Analysis (4 seconds)
+      if (duration > 0) {
+        setTimeout(() => {
+          setCurrentAgentPopup(null);
+          currentStep++;
+          if (currentStep < agentSequence.length) {
+            showAgent(agentSequence[currentStep], timings[currentStep]);
+          }
+        }, duration);
+      }
+    };
+    
+    // Start with SENTINEL
     setTimeout(() => {
-      setAgents(prev => prev.map(agent => 
-        agent.name === 'MEDIC' 
-          ? { 
-              ...agent, 
-              status: 'ANALYZING',
-              description: 'Healthcare Impact Assessment',
-              currentActivity: 'Vulnerable Population Analysis'
-            }
-          : agent
-      ));
-      setDemoStep(3);
-    }, 7000);
-
-    // Step 3: Resource Verification (4 seconds)
-    setTimeout(() => {
-      setAgents(prev => prev.map(agent => 
-        agent.name === 'DISPATCHER' 
-          ? { 
-              ...agent, 
-              status: 'COORDINATING',
-              description: 'Resource Verification Complete',
-              currentActivity: '15 cooling centers ready, 28 EMS units available'
-            }
-          : agent
-      ));
-      setDemoStep(4);
-    }, 11000);
-
-    // Step 4: Field Deployment (5 seconds)
-    setTimeout(() => {
-      setAgents(prev => prev.map(agent => 
-        agent.name === 'FIELD_OPS' 
-          ? { 
-              ...agent, 
-              status: 'DEPLOYING',
-              description: 'Emergency Deployment Active',
-              currentActivity: 'Dispatching units to Fifth Ward'
-            }
-          : agent
-      ));
-      setDemoStep(5);
-    }, 16000);
-
-    // Step 5: Mass Text Alert (3 seconds)
-    setTimeout(() => {
-      setShowMassTextAlert(true);
-      setDemoStep(6);
-    }, 21000);
-
-    // Auto-close demo
-    setTimeout(() => {
-      setShowDemoPopup(false);
-      setShowMassTextAlert(false);
-      setDemoStep(0);
-      setIsEmergencyMode(false);
-    }, 30000);
+      showAgent(agentSequence[0], timings[0]);
+    }, 1000);
   };
+
+  const resetSimulation = () => {
+    setIsEmergencySimulation(false);
+    setCurrentAgentPopup(null);
+    setSimulationStep(0);
+    setSimulationTimer(0);
+    
+    // Reset to normal conditions
+    setEnvironmentalData(prev => prev ? {
+      ...prev,
+      temperature: 82,
+      heatIndex: 84,
+      threatLevel: 'NORMAL',
+      conditions: 'Partly Cloudy',
+      alerts: []
+    } : prev);
+  };
+
+  const startInteractiveDemo = () => {
+    startEmergencySimulation();
+  };;
 
   const getThreatColor = (level: string) => {
     switch (level) {
@@ -907,36 +884,48 @@ export default function WeatherSentinelMCP() {
           </div>
         </div>
 
-        {/* Enhanced Demo Controls */}
-        <div className="flex flex-wrap gap-6 justify-center mb-8">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-            <Button 
-              onClick={startLiveDemo}
-              disabled={isLiveDemo}
-              className="relative bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-10 py-4 text-xl font-bold rounded-2xl border border-green-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              {isLiveDemo ? (
-                <Activity className="w-5 h-5 mr-2 animate-spin" />
-              ) : (
-                <Eye className="w-5 h-5 mr-2" />
-              )}
-              {isLiveDemo ? 'DEMO RUNNING...' : 'START LIVE DEMO'}
-            </Button>
+        {/* Emergency Simulation Controls */}
+        {!isEmergencySimulation ? (
+          <div className="flex justify-center mb-8">
+            <div className="text-center max-w-2xl">
+              <div className="bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-500/30 rounded-2xl p-8 mb-6">
+                <h3 className="text-2xl font-bold text-green-300 mb-4">🌤️ Normal Operations Mode</h3>
+                <p className="text-xl text-gray-300 mb-4">
+                  Current conditions: 82°F - No emergency protocols required
+                </p>
+                <p className="text-gray-400 mb-6">
+                  With current normal conditions, no AI analysis or emergency resource deployment is needed. 
+                  Sentinel AI continuously monitors 4.78 million Harris County residents through predictive monitoring.
+                </p>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                  <Button 
+                    onClick={startEmergencySimulation}
+                    className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-12 py-6 text-2xl font-bold rounded-2xl border border-red-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    🚨 START EMERGENCY SIMULATION
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-            <Button 
-              onClick={startInteractiveDemo}
-              disabled={isLiveDemo}
-              className="relative bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 px-12 py-5 text-xl font-bold rounded-2xl border border-orange-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              <Zap className="w-6 h-6 mr-3" />
-              START EMERGENCY OPERATIONS DEMO
-            </Button>
+        ) : (
+          <div className="flex justify-center mb-8">
+            <div className="text-center">
+              <div className="bg-gradient-to-r from-red-900/60 to-orange-900/60 border border-red-500/50 rounded-2xl p-6 mb-4">
+                <h3 className="text-2xl font-bold text-red-300 mb-2">🚨 EMERGENCY SIMULATION ACTIVE</h3>
+                <p className="text-xl text-orange-300">Heat Index: 108°F - EXTREME DANGER</p>
+                <p className="text-gray-300">Multi-agent emergency response sequence in progress...</p>
+              </div>
+              <Button 
+                onClick={resetSimulation}
+                className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 px-6 py-3 text-lg font-bold rounded-xl"
+              >
+                Reset to Normal Operations
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Enhanced Agent Status Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -1264,39 +1253,140 @@ export default function WeatherSentinelMCP() {
           </div>
         )}
 
-        {/* Mass Text Alert Simulation */}
-        {showMassTextAlert && (
-          <div className="fixed bottom-8 right-8 bg-gradient-to-br from-red-900 to-black border border-red-400 rounded-2xl p-6 max-w-md shadow-2xl z-50 animate-pulse">
-            <div className="flex items-center mb-4">
-              <div className="w-4 h-4 bg-red-500 rounded-full mr-3 animate-ping"></div>
-              <h3 className="text-lg font-bold text-red-300">EMERGENCY ALERT SENT</h3>
-            </div>
-            
-            <div className="bg-black/60 rounded-xl p-4 mb-4">
-              <div className="text-xs text-gray-400 mb-2">TO: Field Commander - Harris County Emergency Ops</div>
-              <div className="text-sm text-white font-medium">
-                IMMEDIATE DEPLOYMENT ORDER
-                <br /><br />
-                WHERE: Fifth Ward (zip 77026)
-                <br />
-                WHAT: Deploy 5 mobile cooling units, 8 EMS teams
-                <br />
-                WHEN: Immediate - Heat index 124°F
-                <br />
-                PRIORITY: Elderly residents, families with children
-                <br /><br />
-                Coordinate with local community centers.
-                <br />
-                Report status every 15 minutes.
+        {/* Agent Popup Modals */}
+        {currentAgentPopup && (
+          <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-3xl p-12 max-w-4xl w-full mx-4 shadow-2xl border-4 ${
+              currentAgentPopup === 'SENTINEL' ? 'border-green-500' :
+              currentAgentPopup === 'MEDIC' ? 'border-blue-500' :
+              currentAgentPopup === 'DISPATCHER' ? 'border-orange-500' :
+              'border-red-500'
+            }`}>
+              
+              {/* Agent Header */}
+              <div className="flex items-center justify-center gap-6 mb-8">
+                <div className={`text-8xl w-32 h-32 flex items-center justify-center rounded-full ${
+                  currentAgentPopup === 'SENTINEL' ? 'bg-green-500/20' :
+                  currentAgentPopup === 'MEDIC' ? 'bg-blue-500/20' :
+                  currentAgentPopup === 'DISPATCHER' ? 'bg-orange-500/20' :
+                  'bg-red-500/20'
+                }`}>
+                  {currentAgentPopup === 'SENTINEL' && '🛡️'}
+                  {currentAgentPopup === 'MEDIC' && '🏥'}
+                  {currentAgentPopup === 'DISPATCHER' && '📞'}
+                  {currentAgentPopup === 'COMMANDER' && '🎯'}
+                </div>
+                <div>
+                  <h2 className={`text-5xl font-bold mb-2 ${
+                    currentAgentPopup === 'SENTINEL' ? 'text-green-300' :
+                    currentAgentPopup === 'MEDIC' ? 'text-blue-300' :
+                    currentAgentPopup === 'DISPATCHER' ? 'text-orange-300' :
+                    'text-red-300'
+                  }`}>
+                    {currentAgentPopup} AGENT
+                  </h2>
+                  <p className="text-xl text-gray-400">
+                    {currentAgentPopup === 'SENTINEL' && 'Environmental Detection & Analysis'}
+                    {currentAgentPopup === 'MEDIC' && 'Healthcare Impact Assessment'}
+                    {currentAgentPopup === 'DISPATCHER' && 'Resource Verification & Deployment'}
+                    {currentAgentPopup === 'COMMANDER' && 'Emergency Coordination Complete'}
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <div className="text-xs text-green-400">
-              ✓ Sent to 12 field commanders
-              <br />
-              ✓ SMS delivery confirmed
-              <br />
-              ✓ Emergency protocols activated
+
+              {/* Agent Content */}
+              <div className={`bg-black/40 rounded-2xl p-8 border-l-4 font-mono text-lg ${
+                currentAgentPopup === 'SENTINEL' ? 'border-l-green-500' :
+                currentAgentPopup === 'MEDIC' ? 'border-l-blue-500' :
+                currentAgentPopup === 'DISPATCHER' ? 'border-l-orange-500' :
+                'border-l-red-500'
+              }`}>
+                
+                {currentAgentPopup === 'SENTINEL' && (
+                  <div className="space-y-3">
+                    <div className="text-green-300">🔍 Real-time environmental analysis:</div>
+                    <div>• Temperature spike detected: 105°F</div>
+                    <div>• Heat Index calculated: 108°F EXTREME DANGER</div>
+                    <div>• Duration forecast: 6+ hours above 105°F</div>
+                    <div>• Population at risk: 800,000+ residents</div>
+                    <div>• Power grid strain: 94% capacity</div>
+                    <div className="text-red-400">🚨 EMERGENCY THRESHOLD EXCEEDED</div>
+                    <div className="text-green-400">✅ Triggering multi-agent response...</div>
+                  </div>
+                )}
+
+                {currentAgentPopup === 'MEDIC' && (
+                  <div className="space-y-3">
+                    <div className="text-blue-300">🧠 Healthcare impact analysis:</div>
+                    <div>• Processing historical data 2019-2023</div>
+                    <div>• Predicted ED surge: +287 visits (+45%)</div>
+                    <div>• Peak load window: 14:00-20:00 today</div>
+                    <div>• Vulnerable areas identified:</div>
+                    <div className="ml-4">- Fifth Ward: 56% lack AC, 35K residents</div>
+                    <div className="ml-4">- Third Ward: Elderly population, 28K residents</div>
+                    <div className="ml-4">- East End: Outdoor workers, 42K residents</div>
+                    <div>• Specialty demand surge: Cardiology +60%</div>
+                    <div className="text-blue-400">✅ Healthcare analysis complete</div>
+                  </div>
+                )}
+
+                {currentAgentPopup === 'DISPATCHER' && (
+                  <div className="space-y-3">
+                    <div className="text-orange-300">📋 Resource verification & deployment:</div>
+                    <div className="text-green-400">✓ Cooling Centers: 15 facilities available</div>
+                    <div className="text-green-400">✓ Personnel: 47 staff confirmed ready</div>
+                    <div className="text-green-400">✓ EMS Units: 23 ambulances available</div>
+                    <div className="text-green-400">✓ Transport: 12 buses staged</div>
+                    <div>• Deployment sequence planned:</div>
+                    <div className="ml-4">- Phase 1: 8 priority cooling centers</div>
+                    <div className="ml-4">- Phase 2: 12 EMS units to vulnerable areas</div>
+                    <div>• Stakeholder notifications sent</div>
+                    <div className="text-orange-400">✅ All resources verified</div>
+                  </div>
+                )}
+
+                {currentAgentPopup === 'COMMANDER' && (
+                  <div className="space-y-4">
+                    <div className="text-red-300">⚡ Emergency coordination complete:</div>
+                    <div>• Field commanders deployed to sectors</div>
+                    <div>• Operational monitoring established</div>
+                    <div>• Hospital capacity tracking active</div>
+                    <div>• 15-minute predictive deployment complete</div>
+                    <div>• 4.78M residents protected proactively</div>
+                    
+                    <div className="bg-red-900/30 rounded-xl p-6 mt-6">
+                      <div className="text-xl font-bold text-red-300 mb-4">📊 FINAL DEPLOYMENT SUMMARY:</div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-green-400">✅ 8 Cooling Centers opened</div>
+                        <div className="text-green-400">✅ 12 EMS Units staged</div>
+                        <div className="text-green-400">✅ 47 Personnel deployed</div>
+                        <div className="text-green-400">✅ 15 minutes response time</div>
+                      </div>
+                      <div className="text-center mt-4 text-lg text-yellow-300">
+                        (vs 2+ hours traditional reactive response)
+                      </div>
+                    </div>
+                    
+                    <div className="text-center mt-6">
+                      <Button 
+                        onClick={resetSimulation}
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-8 py-4 text-xl font-bold rounded-xl"
+                      >
+                        Complete Simulation
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Indicator */}
+              {currentAgentPopup !== 'COMMANDER' && (
+                <div className="absolute bottom-6 right-6 bg-black/60 px-4 py-2 rounded-full text-sm text-gray-400">
+                  {currentAgentPopup === 'SENTINEL' && 'Step 1 of 4'}
+                  {currentAgentPopup === 'MEDIC' && 'Step 2 of 4'}
+                  {currentAgentPopup === 'DISPATCHER' && 'Step 3 of 4'}
+                </div>
+              )}
             </div>
           </div>
         )}
