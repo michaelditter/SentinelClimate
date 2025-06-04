@@ -1225,8 +1225,8 @@ export default function WeatherSentinelMCP() {
 
         {/* Agent Popup Modals */}
         {currentAgentPopup && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-3xl p-12 max-w-4xl w-full mx-4 shadow-2xl border-4 ${
+          <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-8 max-w-5xl w-full shadow-2xl border-2 ${
               currentAgentPopup === 'SENTINEL' ? 'border-green-500' :
               currentAgentPopup === 'MEDIC' ? 'border-blue-500' :
               currentAgentPopup === 'DISPATCHER' ? 'border-orange-500' :
@@ -1234,8 +1234,8 @@ export default function WeatherSentinelMCP() {
             }`}>
               
               {/* Agent Header */}
-              <div className="flex items-center justify-center gap-6 mb-8">
-                <div className={`text-8xl w-32 h-32 flex items-center justify-center rounded-full ${
+              <div className="flex items-center justify-center gap-6 mb-6">
+                <div className={`text-6xl w-24 h-24 flex items-center justify-center rounded-full ${
                   currentAgentPopup === 'SENTINEL' ? 'bg-green-500/20' :
                   currentAgentPopup === 'MEDIC' ? 'bg-blue-500/20' :
                   currentAgentPopup === 'DISPATCHER' ? 'bg-orange-500/20' :
@@ -1247,7 +1247,7 @@ export default function WeatherSentinelMCP() {
                   {currentAgentPopup === 'COMMANDER' && '🎯'}
                 </div>
                 <div>
-                  <h2 className={`text-5xl font-bold mb-2 ${
+                  <h2 className={`text-3xl font-bold mb-2 ${
                     currentAgentPopup === 'SENTINEL' ? 'text-green-300' :
                     currentAgentPopup === 'MEDIC' ? 'text-blue-300' :
                     currentAgentPopup === 'DISPATCHER' ? 'text-orange-300' :
@@ -1255,7 +1255,7 @@ export default function WeatherSentinelMCP() {
                   }`}>
                     {currentAgentPopup} AGENT
                   </h2>
-                  <p className="text-xl text-gray-400">
+                  <p className="text-lg text-gray-400">
                     {currentAgentPopup === 'SENTINEL' && 'Environmental Detection & Analysis'}
                     {currentAgentPopup === 'MEDIC' && 'Healthcare Impact Assessment'}
                     {currentAgentPopup === 'DISPATCHER' && 'Resource Verification & Deployment'}
@@ -1265,7 +1265,7 @@ export default function WeatherSentinelMCP() {
               </div>
 
               {/* Agent Content */}
-              <div className={`bg-black/40 rounded-2xl p-8 border-l-4 font-mono text-lg ${
+              <div className={`bg-black/40 rounded-xl p-6 border-l-4 font-mono text-base leading-relaxed ${
                 currentAgentPopup === 'SENTINEL' ? 'border-l-green-500' :
                 currentAgentPopup === 'MEDIC' ? 'border-l-blue-500' :
                 currentAgentPopup === 'DISPATCHER' ? 'border-l-orange-500' :
@@ -1273,74 +1273,74 @@ export default function WeatherSentinelMCP() {
               }`}>
                 
                 {currentAgentPopup === 'SENTINEL' && (
-                  <div className="space-y-3">
-                    <div className="text-green-300">🔍 Real-time environmental analysis:</div>
-                    <div>• Temperature spike detected: 105°F</div>
-                    <div>• Heat Index calculated: 108°F EXTREME DANGER</div>
-                    <div>• Duration forecast: 6+ hours above 105°F</div>
-                    <div>• Population at risk: 800,000+ residents</div>
-                    <div>• Power grid strain: 94% capacity</div>
-                    <div className="text-red-400">🚨 EMERGENCY THRESHOLD EXCEEDED</div>
-                    <div className="text-green-400">✅ Triggering multi-agent response...</div>
+                  <div className="space-y-2">
+                    <div className="text-green-300 text-lg font-semibold">🔍 Real-time environmental analysis:</div>
+                    <div className="text-sm">• Temperature spike detected: 105°F</div>
+                    <div className="text-sm">• Heat Index calculated: 108°F EXTREME DANGER</div>
+                    <div className="text-sm">• Duration forecast: 6+ hours above 105°F</div>
+                    <div className="text-sm">• Population at risk: 800,000+ residents</div>
+                    <div className="text-sm">• Power grid strain: 94% capacity</div>
+                    <div className="text-red-400 text-sm font-medium">🚨 EMERGENCY THRESHOLD EXCEEDED</div>
+                    <div className="text-green-400 text-sm font-medium">✅ Triggering multi-agent response...</div>
                   </div>
                 )}
 
                 {currentAgentPopup === 'MEDIC' && (
-                  <div className="space-y-3">
-                    <div className="text-blue-300">🧠 Healthcare impact analysis:</div>
-                    <div>• Processing historical data 2019-2023</div>
-                    <div>• Predicted ED surge: +287 visits (+45%)</div>
-                    <div>• Peak load window: 14:00-20:00 today</div>
-                    <div>• Vulnerable areas identified:</div>
-                    <div className="ml-4">- Fifth Ward: 56% lack AC, 35K residents</div>
-                    <div className="ml-4">- Third Ward: Elderly population, 28K residents</div>
-                    <div className="ml-4">- East End: Outdoor workers, 42K residents</div>
-                    <div>• Specialty demand surge: Cardiology +60%</div>
-                    <div className="text-blue-400">✅ Healthcare analysis complete</div>
+                  <div className="space-y-2">
+                    <div className="text-blue-300 text-lg font-semibold">🧠 Healthcare impact analysis:</div>
+                    <div className="text-sm">• Processing historical data 2019-2023</div>
+                    <div className="text-sm">• Predicted ED surge: +287 visits (+45%)</div>
+                    <div className="text-sm">• Peak load window: 14:00-20:00 today</div>
+                    <div className="text-sm">• Vulnerable areas identified:</div>
+                    <div className="ml-4 text-sm">- Fifth Ward: 56% lack AC, 35K residents</div>
+                    <div className="ml-4 text-sm">- Third Ward: Elderly population, 28K residents</div>
+                    <div className="ml-4 text-sm">- East End: Outdoor workers, 42K residents</div>
+                    <div className="text-sm">• Specialty demand surge: Cardiology +60%</div>
+                    <div className="text-blue-400 text-sm font-medium">✅ Healthcare analysis complete</div>
                   </div>
                 )}
 
                 {currentAgentPopup === 'DISPATCHER' && (
-                  <div className="space-y-3">
-                    <div className="text-orange-300">📋 Resource verification & deployment:</div>
-                    <div className="text-green-400">✓ Cooling Centers: 15 facilities available</div>
-                    <div className="text-green-400">✓ Personnel: 47 staff confirmed ready</div>
-                    <div className="text-green-400">✓ EMS Units: 23 ambulances available</div>
-                    <div className="text-green-400">✓ Transport: 12 buses staged</div>
-                    <div>• Deployment sequence planned:</div>
-                    <div className="ml-4">- Phase 1: 8 priority cooling centers</div>
-                    <div className="ml-4">- Phase 2: 12 EMS units to vulnerable areas</div>
-                    <div>• Stakeholder notifications sent</div>
-                    <div className="text-orange-400">✅ All resources verified</div>
+                  <div className="space-y-2">
+                    <div className="text-orange-300 text-lg font-semibold">📋 Resource verification & deployment:</div>
+                    <div className="text-green-400 text-sm">✓ Cooling Centers: 15 facilities available</div>
+                    <div className="text-green-400 text-sm">✓ Personnel: 47 staff confirmed ready</div>
+                    <div className="text-green-400 text-sm">✓ EMS Units: 23 ambulances available</div>
+                    <div className="text-green-400 text-sm">✓ Transport: 12 buses staged</div>
+                    <div className="text-sm">• Deployment sequence planned:</div>
+                    <div className="ml-4 text-sm">- Phase 1: 8 priority cooling centers</div>
+                    <div className="ml-4 text-sm">- Phase 2: 12 EMS units to vulnerable areas</div>
+                    <div className="text-sm">• Stakeholder notifications sent</div>
+                    <div className="text-orange-400 text-sm font-medium">✅ All resources verified</div>
                   </div>
                 )}
 
                 {currentAgentPopup === 'COMMANDER' && (
-                  <div className="space-y-4">
-                    <div className="text-red-300">⚡ Emergency coordination complete:</div>
-                    <div>• Field commanders deployed to sectors</div>
-                    <div>• Operational monitoring established</div>
-                    <div>• Hospital capacity tracking active</div>
-                    <div>• 15-minute predictive deployment complete</div>
-                    <div>• 4.78M residents protected proactively</div>
+                  <div className="space-y-3">
+                    <div className="text-red-300 text-lg font-semibold">⚡ Emergency coordination complete:</div>
+                    <div className="text-sm">• Field commanders deployed to sectors</div>
+                    <div className="text-sm">• Operational monitoring established</div>
+                    <div className="text-sm">• Hospital capacity tracking active</div>
+                    <div className="text-sm">• 15-minute predictive deployment complete</div>
+                    <div className="text-sm">• 4.78M residents protected proactively</div>
                     
-                    <div className="bg-red-900/30 rounded-xl p-6 mt-6">
-                      <div className="text-xl font-bold text-red-300 mb-4">📊 FINAL DEPLOYMENT SUMMARY:</div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-green-400">✅ 8 Cooling Centers opened</div>
-                        <div className="text-green-400">✅ 12 EMS Units staged</div>
-                        <div className="text-green-400">✅ 47 Personnel deployed</div>
-                        <div className="text-green-400">✅ 15 minutes response time</div>
+                    <div className="bg-red-900/30 rounded-lg p-4 mt-4">
+                      <div className="text-lg font-bold text-red-300 mb-3">📊 FINAL DEPLOYMENT SUMMARY:</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-green-400 text-sm">✅ 8 Cooling Centers opened</div>
+                        <div className="text-green-400 text-sm">✅ 12 EMS Units staged</div>
+                        <div className="text-green-400 text-sm">✅ 47 Personnel deployed</div>
+                        <div className="text-green-400 text-sm">✅ 15 minutes response time</div>
                       </div>
-                      <div className="text-center mt-4 text-lg text-yellow-300">
+                      <div className="text-center mt-3 text-base text-yellow-300">
                         (vs 2+ hours traditional reactive response)
                       </div>
                     </div>
                     
-                    <div className="text-center mt-6">
+                    <div className="text-center mt-4">
                       <Button 
                         onClick={resetSimulation}
-                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-8 py-4 text-xl font-bold rounded-xl"
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-6 py-3 text-lg font-bold rounded-lg"
                       >
                         Complete Simulation
                       </Button>
