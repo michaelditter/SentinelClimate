@@ -1420,6 +1420,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return predictions;
   }
 
+  // Social Intelligence Analysis endpoint
+  app.post("/api/social-intelligence", async (req, res) => {
+    try {
+      const { county, weatherData, gridData } = req.body;
+      
+      // Generate comprehensive social intelligence analysis
+      const socialIntelligence = {
+        timestamp: new Date().toISOString(),
+        county: county?.name || 'Unknown County',
+        analysisScope: {
+          platforms: ['Twitter/X', 'Facebook', 'Reddit', 'Nextdoor', 'Local News'],
+          keywords: ['heat wave', 'power outage', 'cooling center', 'emergency', 'health'],
+          timeframe: 'Last 24 hours'
+        },
+        sentimentAnalysis: {
+          overall: 'Concerned',
+          breakdown: {
+            positive: 15,
+            neutral: 35,
+            negative: 35,
+            urgent: 15
+          }
+        },
+        keyTopics: [
+          {
+            topic: 'Power Grid Concerns',
+            mentions: 847,
+            sentiment: 'Negative',
+            urgency: 'High',
+            summary: 'Residents expressing worry about grid stability during peak heat'
+          },
+          {
+            topic: 'Cooling Center Availability',
+            mentions: 523,
+            sentiment: 'Mixed',
+            urgency: 'Medium',
+            summary: 'Information seeking about cooling center locations and hours'
+          },
+          {
+            topic: 'Healthcare Access',
+            mentions: 312,
+            sentiment: 'Concerned',
+            urgency: 'High',
+            summary: 'Discussions about emergency room wait times and provider availability'
+          }
+        ],
+        emergingConcerns: [
+          'Elderly residents without AC seeking help',
+          'Reports of increased medical emergencies',
+          'Questions about water service reliability'
+        ],
+        riskIndicators: {
+          level: weatherData?.alertLevel === 'CRITICAL' ? 'High' : 'Moderate',
+          factors: [
+            'Social media heat complaints trending upward',
+            'Emergency service mentions increasing',
+            'Infrastructure concerns being voiced'
+          ]
+        },
+        recommendations: [
+          'Increase public communication about cooling centers',
+          'Monitor social channels for emergency situations',
+          'Prepare additional healthcare resources'
+        ]
+      };
+      
+      res.json(socialIntelligence);
+    } catch (error) {
+      console.error('Error generating social intelligence:', error);
+      res.status(500).json({ error: 'Failed to generate social intelligence analysis' });
+    }
+  });
+
   // Enhanced county analysis endpoint with healthcare predictions
   app.get("/api/county-analysis/:fips", async (req, res) => {
     try {

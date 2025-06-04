@@ -578,20 +578,99 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
         </TabsContent>
 
         <TabsContent value="social" className="space-y-4">
-          {/* Social Media Intelligence Placeholder */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Social Media Intelligence</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center py-8">
-              <p className="text-gray-600 mb-4">
-                Click "Social Intelligence" to analyze local social media conversations about heat, infrastructure, and health issues.
-              </p>
-              <Button onClick={fetchSocialMediaIntelligence} disabled={socialLoading}>
-                {socialLoading ? 'Analyzing Social Media...' : 'Run Social Intelligence Analysis'}
-              </Button>
-            </CardContent>
-          </Card>
+          {socialData ? (
+            <div className="space-y-4">
+              {/* Social Intelligence Results */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    Social Media Intelligence
+                    <Badge variant="outline">{socialData.riskIndicators?.level || 'Moderate'} Risk</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-red-500">{socialData.sentimentAnalysis?.breakdown?.negative || 0}%</div>
+                      <div className="text-sm text-gray-600">Negative Sentiment</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-500">{socialData.sentimentAnalysis?.breakdown?.urgent || 0}%</div>
+                      <div className="text-sm text-gray-600">Urgent Posts</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-500">{socialData.keyTopics?.length || 0}</div>
+                      <div className="text-sm text-gray-600">Key Topics</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-500">{socialData.emergingConcerns?.length || 0}</div>
+                      <div className="text-sm text-gray-600">Emerging Concerns</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Key Topics Trending</h4>
+                      <div className="space-y-2">
+                        {socialData.keyTopics?.map((topic: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <div className="font-medium">{topic.topic}</div>
+                              <div className="text-sm text-gray-600">{topic.summary}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-medium">{topic.mentions} mentions</div>
+                              <Badge variant={topic.urgency === 'High' ? 'destructive' : 'secondary'}>
+                                {topic.urgency}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-2">Emerging Concerns</h4>
+                      <div className="space-y-1">
+                        {socialData.emergingConcerns?.map((concern: string, index: number) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <AlertTriangle className="h-4 w-4 text-orange-500" />
+                            <span className="text-sm">{concern}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-2">Recommendations</h4>
+                      <div className="space-y-1">
+                        {socialData.recommendations?.map((rec: string, index: number) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span className="text-sm">{rec}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Social Media Intelligence</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-600 mb-4">
+                  Analyze local social media conversations about heat, infrastructure, and health issues.
+                </p>
+                <Button onClick={fetchSocialMediaIntelligence} disabled={socialLoading}>
+                  {socialLoading ? 'Analyzing Social Media...' : 'Run Social Intelligence Analysis'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
