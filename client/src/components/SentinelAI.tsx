@@ -821,7 +821,7 @@ const SentinelAI: React.FC = () => {
               <span className="text-white font-bold text-lg">S</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold">Sentinel AI</h1>
+              <h1 className="text-xl font-bold">Sentinel AI MCP - Live Demo</h1>
               <p className="text-sm text-gray-400">Crisis Management</p>
             </div>
           </div>
