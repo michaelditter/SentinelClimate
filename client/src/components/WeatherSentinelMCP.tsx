@@ -1225,8 +1225,8 @@ export default function WeatherSentinelMCP() {
 
         {/* Agent Popup Modals */}
         {currentAgentPopup && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-8 max-w-5xl w-full shadow-2xl border-2 ${
+          <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-end pr-8">
+            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-8 max-w-4xl w-full mr-8 shadow-2xl border-2 ${
               currentAgentPopup === 'SENTINEL' ? 'border-green-500' :
               currentAgentPopup === 'MEDIC' ? 'border-blue-500' :
               currentAgentPopup === 'DISPATCHER' ? 'border-orange-500' :
