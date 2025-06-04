@@ -860,21 +860,21 @@ export default function WeatherSentinelMCP() {
         {/* Emergency Simulation Controls */}
         {!isEmergencySimulation ? (
           <div className="flex justify-center mb-8">
-            <div className="text-center max-w-2xl">
-              <div className="bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-500/30 rounded-2xl p-8 mb-6">
-                <h3 className="text-2xl font-bold text-green-300 mb-4">🌤️ Normal Operations Mode</h3>
-                <p className="text-xl text-gray-300 mb-4">
+            <div className="text-center max-w-3xl mx-4">
+              <div className="bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-500/30 rounded-2xl p-6 mb-6">
+                <h3 className="text-xl font-bold text-green-300 mb-3">🌤️ Normal Operations Mode</h3>
+                <p className="text-lg text-gray-300 mb-3">
                   Current conditions: 82°F - No emergency protocols required
                 </p>
-                <p className="text-gray-400 mb-6">
+                <p className="text-sm text-gray-400 mb-5 leading-relaxed">
                   With current normal conditions, no AI analysis or emergency resource deployment is needed. 
                   Sentinel AI continuously monitors 4.78 million Harris County residents through predictive monitoring.
                 </p>
                 <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
                   <Button 
                     onClick={startEmergencySimulation}
-                    className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-12 py-6 text-2xl font-bold rounded-2xl border border-red-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
+                    className="relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-8 py-4 text-lg font-bold rounded-xl border border-red-400/30 shadow-2xl transform hover:scale-105 transition-all duration-300"
                   >
                     🚨 START EMERGENCY SIMULATION
                   </Button>
@@ -884,15 +884,15 @@ export default function WeatherSentinelMCP() {
           </div>
         ) : (
           <div className="flex justify-center mb-8">
-            <div className="text-center">
-              <div className="bg-gradient-to-r from-red-900/60 to-orange-900/60 border border-red-500/50 rounded-2xl p-6 mb-4">
-                <h3 className="text-2xl font-bold text-red-300 mb-2">🚨 EMERGENCY SIMULATION ACTIVE</h3>
-                <p className="text-xl text-orange-300">Heat Index: 108°F - EXTREME DANGER</p>
-                <p className="text-gray-300">Multi-agent emergency response sequence in progress...</p>
+            <div className="text-center max-w-2xl mx-4">
+              <div className="bg-gradient-to-r from-red-900/60 to-orange-900/60 border border-red-500/50 rounded-2xl p-5 mb-4">
+                <h3 className="text-xl font-bold text-red-300 mb-2">🚨 EMERGENCY SIMULATION ACTIVE</h3>
+                <p className="text-lg text-orange-300 mb-1">Heat Index: 108°F - EXTREME DANGER</p>
+                <p className="text-sm text-gray-300">Multi-agent emergency response sequence in progress...</p>
               </div>
               <Button 
                 onClick={resetSimulation}
-                className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 px-6 py-3 text-lg font-bold rounded-xl"
+                className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 px-6 py-3 text-base font-medium rounded-lg"
               >
                 Reset to Normal Operations
               </Button>
