@@ -131,6 +131,8 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
 
   const runAgentAnalysis = async (scenario: CrisisScenario) => {
     setLoading(true);
+    console.log('Starting agent analysis for scenario:', scenario);
+    
     try {
       const response = await fetch('/api/agent-analysis', {
         method: 'POST',
@@ -144,11 +146,14 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
         })
       });
       
+      console.log('Agent analysis response status:', response.status);
+      
       if (response.ok) {
         const analysis = await response.json();
+        console.log('Agent analysis received:', analysis);
         setAgentAnalysis(analysis);
       } else {
-        // Generate authentic analysis from real-time data
+        console.log('Agent analysis failed, using fallback');
         const authenticAnalysis = generateAuthenticAnalysis(scenario);
         setAgentAnalysis(authenticAnalysis);
       }
