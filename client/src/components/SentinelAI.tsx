@@ -623,7 +623,7 @@ const SentinelAI: React.FC = () => {
                     <div className="font-medium text-white">Deploy Resources</div>
                   </motion.button>
                   <motion.button 
-                    onClick={handleRunSimulation}
+                    onClick={() => setSelectedView('crisis-simulation')}
                     className="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg text-center transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

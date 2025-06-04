@@ -39,9 +39,10 @@ interface AgentStatus {
   id: string;
   name: string;
   icon: React.ReactNode;
-  status: 'STANDBY' | 'ACTIVE' | 'PROCESSING' | 'COMPLETE';
+  status: 'STANDBY' | 'MONITORING' | 'THREAT_DETECTED' | 'ANALYZING' | 'COORDINATING' | 'DEPLOYING' | 'ACTIVE';
   description: string;
   lastUpdate?: string;
+  phase?: string;
 }
 
 interface PredictionData {
@@ -112,13 +113,13 @@ export default function WeatherSentinelMCP() {
       console.error('NWS weather service error:', error);
       // Request user to check API configuration if live data fails
       setWeatherData({
-        temperature: 'ERR',
-        heatIndex: 'ERR',
-        humidity: 'ERR',
+        temperature: 0,
+        heatIndex: 0,
+        humidity: 0,
         location: 'NWS Connection Error',
         timestamp: new Date().toISOString(),
         alerts: [],
-        threatLevel: 'WATCH',
+        threatLevel: 'LOW',
         conditions: 'API Connection Required'
       });
     }
@@ -127,27 +128,55 @@ export default function WeatherSentinelMCP() {
   const startLiveDemo = async () => {
     setIsLiveDemo(true);
     
-    // Activate agents sequentially
-    const agentSequence = ['ACTIVE', 'PROCESSING', 'COMPLETE'];
-    
-    for (let i = 0; i < agents.length; i++) {
-      setTimeout(() => {
-        setAgents(prev => prev.map((agent, index) => 
-          index === i 
-            ? { 
-                ...agent, 
-                status: agentSequence[Math.min(i, agentSequence.length - 1)] as any,
-                lastUpdate: new Date().toLocaleTimeString()
-              }
-            : agent
-        ));
-      }, i * 2000);
-    }
+    // Phase 1: System Initialization
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'WEATHER SENTINEL' 
+          ? { ...agent, status: 'MONITORING', description: 'Live data streams active', lastUpdate: new Date().toLocaleTimeString() }
+          : agent
+      ));
+    }, 1000);
 
-    // Generate predictions
+    // Phase 2: Threat Detection (simulate heat emergency)
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'WEATHER SENTINEL' 
+          ? { ...agent, status: 'THREAT_DETECTED', description: 'Heat emergency identified', phase: 'Heat Index: 108°F detected' }
+          : agent
+      ));
+    }, 4000);
+
+    // Phase 3: Crisis AI Analysis
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'CRISIS AI' 
+          ? { ...agent, status: 'ANALYZING', description: 'Processing threat data', phase: 'Healthcare surge prediction' }
+          : agent
+      ));
+    }, 7000);
+
+    // Phase 4: Dispatch Coordination
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'DISPATCH' 
+          ? { ...agent, status: 'COORDINATING', description: 'Resource allocation', phase: 'Cooling centers verification' }
+          : agent
+      ));
+    }, 10000);
+
+    // Phase 5: Field Operations
+    setTimeout(() => {
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'FIELD OPS' 
+          ? { ...agent, status: 'DEPLOYING', description: 'Emergency deployment', phase: 'Mobile units dispatched' }
+          : agent
+      ));
+    }, 13000);
+
+    // Generate comprehensive predictions
     setTimeout(() => {
       setPredictions({
-        edVisits: 156,
+        edVisits: 287,
         edSurge: 34,
         emsIncrease: 28,
         coolingCenters: 12,
@@ -194,9 +223,12 @@ export default function WeatherSentinelMCP() {
 
   const getAgentStatusColor = (status: string) => {
     switch (status) {
+      case 'MONITORING': return 'border-blue-500 bg-blue-500/10';
+      case 'THREAT_DETECTED': return 'border-red-500 bg-red-500/10';
+      case 'ANALYZING': return 'border-yellow-500 bg-yellow-500/10';
+      case 'COORDINATING': return 'border-purple-500 bg-purple-500/10';
+      case 'DEPLOYING': return 'border-orange-500 bg-orange-500/10';
       case 'ACTIVE': return 'border-green-500 bg-green-500/10';
-      case 'PROCESSING': return 'border-yellow-500 bg-yellow-500/10';
-      case 'COMPLETE': return 'border-blue-500 bg-blue-500/10';
       default: return 'border-gray-500 bg-gray-500/10';
     }
   };
@@ -382,8 +414,21 @@ export default function WeatherSentinelMCP() {
                   <div className="mb-4 text-3xl">{agent.icon}</div>
                   <div className="font-bold text-xl mb-2">{agent.name}</div>
                   <div className="text-sm opacity-80 mb-3">{agent.description}</div>
-                  <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${agent.status === 'STANDBY' ? 'bg-gray-600 text-gray-200' : 'bg-green-600 text-white'}`}>
-                    {agent.status}
+                  {agent.phase && (
+                    <div className="text-xs text-cyan-300 mb-2 italic">
+                      {agent.phase}
+                    </div>
+                  )}
+                  <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                    agent.status === 'STANDBY' ? 'bg-gray-600 text-gray-200' :
+                    agent.status === 'MONITORING' ? 'bg-blue-600 text-white' :
+                    agent.status === 'THREAT_DETECTED' ? 'bg-red-600 text-white' :
+                    agent.status === 'ANALYZING' ? 'bg-yellow-600 text-white' :
+                    agent.status === 'COORDINATING' ? 'bg-purple-600 text-white' :
+                    agent.status === 'DEPLOYING' ? 'bg-orange-600 text-white' :
+                    'bg-green-600 text-white'
+                  }`}>
+                    {agent.status.replace('_', ' ')}
                   </div>
                   {agent.lastUpdate && (
                     <div className="text-xs mt-3 opacity-60">
