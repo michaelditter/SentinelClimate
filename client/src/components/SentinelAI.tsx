@@ -39,6 +39,7 @@ import EnhancedCountyDeepDive from './EnhancedCountyDeepDive';
 import RealTimeKPIs from './RealTimeKPIs';
 import CountyProjections from './CountyProjections';
 import TriggerOutreach from './TriggerOutreach';
+import WeatherSentinelMCP from './WeatherSentinelMCP';
 
 // Data and hooks
 import { counties, resourceDeployments } from '@/data/geoData';
@@ -49,11 +50,11 @@ import { useSimulation } from '@/hooks/useSimulation';
 import { County } from '@/types/geo.types';
 import { SimulationScenario } from '@/types/simulation.types';
 
-type ViewType = 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'economic-analysis' | 'county-analysis' | 'trigger-outreach';
+type ViewType = 'weather-sentinel-mcp' | 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'economic-analysis' | 'county-analysis' | 'trigger-outreach';
 
 const SentinelAI: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedView, setSelectedView] = useState<ViewType>('mission-control');
+  const [selectedView, setSelectedView] = useState<ViewType>('weather-sentinel-mcp');
   const [selectedCounty, setSelectedCounty] = useState<County | null>(null);
   const [simulationRunning, setSimulationRunning] = useState(true);
   const [analysisSteps, setAnalysisSteps] = useState<any[]>([]);
@@ -570,6 +571,10 @@ const SentinelAI: React.FC = () => {
   ];
 
   const viewTitles: Record<ViewType, { title: string; subtitle: string }> = {
+    'weather-sentinel-mcp': {
+      title: 'Weather Sentinel MCP - Live Demo',
+      subtitle: 'Real-time weather monitoring with AI agent cascade response'
+    },
     'mission-control': {
       title: 'Mission Control Dashboard',
       subtitle: 'Real-time crisis monitoring and response coordination'
