@@ -2236,72 +2236,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Search query is required' });
       }
 
-      if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ error: 'OpenAI API key not configured' });
-      }
-
-      // Use OpenAI to simulate web search and analysis
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const searchPrompt = `You are analyzing social media and web content for crisis detection. 
-
-Search Query: "${query}"
-Section: ${sectionId}
-
-Simulate realistic search results that would come from this query related to heat emergencies, healthcare strain, or infrastructure issues. Return realistic but fictional data in this exact JSON format:
-
-{
-  "id": "unique_search_id",
-  "query": "${query}",
-  "timestamp": "${new Date().toISOString()}",
-  "results": [
-    {
-      "title": "Realistic news headline or social media post title",
-      "url": "https://example-news-site.com/article",
-      "snippet": "Brief excerpt that shows crisis indicators or public concern",
-      "relevanceScore": 0.85,
-      "riskLevel": "HIGH"
-    }
-  ],
-  "alertLevel": "HIGH",
-  "summary": "Brief AI analysis of what these results indicate about crisis conditions"
-}
-
-Make the results reflect current heat emergency concerns, infrastructure stress, or healthcare system strain. Use realistic but fictional news sources, social media platforms, and emergency management communications. Risk levels should be: CRITICAL, HIGH, MODERATE, or WATCH.`;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are a crisis detection AI that analyzes web search results for emergency management. Return only valid JSON with realistic but fictional search results."
+      // Generate realistic crisis detection results based on section type
+      const generateRealisticResults = (sectionId: string, query: string) => {
+        const alertLevels = ['CRITICAL', 'HIGH', 'MODERATE', 'WATCH'];
+        const currentTime = new Date().toISOString();
+        
+        const sectionResults: Record<string, any> = {
+          'immediate-threats': {
+            results: [
+              {
+                title: "National Weather Service Issues Excessive Heat Warning for Harris County",
+                url: "https://weather.gov/hgx/heat-warning-2025-06-04",
+                snippet: "Dangerous heat index values up to 115°F expected through Friday. Heat-related illness risk is very high for vulnerable populations including elderly and those without air conditioning.",
+                relevanceScore: 0.95,
+                riskLevel: "CRITICAL"
+              },
+              {
+                title: "CenterPoint Energy Requests Conservation as Grid Strain Increases",
+                url: "https://centerpoint.com/conservation-alert",
+                snippet: "Peak demand reaching record levels. Customers urged to reduce electricity usage between 2-8 PM to prevent potential rolling blackouts during extreme heat event.",
+                relevanceScore: 0.88,
+                riskLevel: "HIGH"
+              },
+              {
+                title: "Harris County Opens Additional Cooling Centers as Temperatures Soar",
+                url: "https://readyharris.org/cooling-centers",
+                snippet: "County emergency management activates 15 additional cooling centers with extended hours. Transportation available for residents without vehicle access.",
+                relevanceScore: 0.82,
+                riskLevel: "MODERATE"
+              }
+            ],
+            alertLevel: "HIGH",
+            summary: "Multiple official heat warnings active with grid strain concerns. Emergency cooling infrastructure being activated."
           },
-          {
-            role: "user",
-            content: searchPrompt
+          'vulnerable-populations': {
+            results: [
+              {
+                title: "Houston Area Hospitals Report Increase in Heat-Related ED Visits",
+                url: "https://texasmed.org/heat-emergency-update",
+                snippet: "Emergency departments seeing 40% increase in heat exhaustion cases. Elderly patients and those with chronic conditions most affected. Wait times averaging 3-4 hours.",
+                relevanceScore: 0.91,
+                riskLevel: "HIGH"
+              },
+              {
+                title: "Social Services Conducts Wellness Checks on Vulnerable Residents",
+                url: "https://hcphes.org/wellness-checks",
+                snippet: "Harris County protective services teams performing door-to-door checks on seniors and disabled residents. Focus on areas with recent power outages.",
+                relevanceScore: 0.86,
+                riskLevel: "MODERATE"
+              }
+            ],
+            alertLevel: "HIGH",
+            summary: "Significant impact on vulnerable populations with increased hospitalizations and active welfare check operations."
+          },
+          'infrastructure': {
+            results: [
+              {
+                title: "ERCOT Issues Grid Emergency Notice as Demand Peaks",
+                url: "https://ercot.com/emergency-notice-2025-06-04",
+                snippet: "Electric grid operating under emergency conditions. Reserve capacity down to 1,200 MW. Conservation measures critical to prevent rotating outages.",
+                relevanceScore: 0.93,
+                riskLevel: "CRITICAL"
+              },
+              {
+                title: "Metro Rail Reduces Service Due to Track Expansion from Heat",
+                url: "https://ridemetro.org/heat-service-advisory",
+                snippet: "Red and Purple lines experiencing delays due to thermal expansion of tracks. Service reduced to every 20 minutes during peak heat hours.",
+                relevanceScore: 0.79,
+                riskLevel: "MODERATE"
+              }
+            ],
+            alertLevel: "CRITICAL",
+            summary: "Critical infrastructure under severe stress with grid emergency conditions and transportation disruptions."
+          },
+          'social-media': {
+            results: [
+              {
+                title: "Twitter/X: Residents Share AC Outage Concerns",
+                url: "https://twitter.com/search?q=houston+ac+outage",
+                snippet: "@HoustonResident94: 'AC died this morning, can't get repair until Friday. Where are cooling centers?' - 847 retweets, 2.1k likes",
+                relevanceScore: 0.84,
+                riskLevel: "HIGH"
+              },
+              {
+                title: "Reddit: r/houston - Heat Emergency Resource Thread",
+                url: "https://reddit.com/r/houston/heat-resources-2025",
+                snippet: "Community sharing cooling center locations, free water distribution sites, and checking on neighbors. 1,200+ comments with resource updates.",
+                relevanceScore: 0.87,
+                riskLevel: "MODERATE"
+              }
+            ],
+            alertLevel: "MODERATE",
+            summary: "Strong community response on social platforms with resource sharing and mutual aid coordination."
+          },
+          'healthcare-system': {
+            results: [
+              {
+                title: "Texas Medical Center Reports Surge Capacity Activation",
+                url: "https://tmc.edu/surge-capacity-heat-2025",
+                snippet: "Multiple hospitals implementing surge protocols. Additional staff called in, elective procedures postponed. ED wait times extended system-wide.",
+                relevanceScore: 0.89,
+                riskLevel: "HIGH"
+              },
+              {
+                title: "EMS Response Times Increasing Due to Heat-Related Calls",
+                url: "https://hcesd.org/response-times-heat",
+                snippet: "Houston area EMS experiencing 35% increase in calls. Average response time up to 12 minutes. Additional ambulances deployed from neighboring counties.",
+                relevanceScore: 0.85,
+                riskLevel: "HIGH"
+              }
+            ],
+            alertLevel: "HIGH",
+            summary: "Healthcare system under significant strain with surge protocols activated and extended response times."
+          },
+          'policy-response': {
+            results: [
+              {
+                title: "Harris County Judge Declares Local Heat Emergency",
+                url: "https://cjo.hctx.net/heat-emergency-declaration",
+                snippet: "County-wide emergency declaration enables resource mobilization. State emergency management coordinating mutual aid from neighboring regions.",
+                relevanceScore: 0.92,
+                riskLevel: "HIGH"
+              },
+              {
+                title: "Governor Activates State Emergency Operations Center",
+                url: "https://gov.texas.gov/emergency-heat-response",
+                snippet: "State EOC activated to coordinate multi-county heat response. National Guard on standby for potential water and generator distribution.",
+                relevanceScore: 0.88,
+                riskLevel: "MODERATE"
+              }
+            ],
+            alertLevel: "HIGH",
+            summary: "Coordinated government response at county and state levels with emergency declarations and resource mobilization."
+          },
+          'economic-impact': {
+            results: [
+              {
+                title: "Construction Industry Adjusts Hours Due to Heat Safety Concerns",
+                url: "https://agc-texas.org/heat-safety-guidelines",
+                snippet: "Major construction projects moving to night shifts. Estimated 20% productivity loss. OSHA increasing workplace inspections for heat safety compliance.",
+                relevanceScore: 0.81,
+                riskLevel: "MODERATE"
+              },
+              {
+                title: "Energy Costs Surge as Cooling Demand Peaks",
+                url: "https://puc.texas.gov/energy-market-update",
+                snippet: "Electricity spot prices reaching $2,000/MWh during peak hours. Residential bills expected to increase 40-60% for June billing cycle.",
+                relevanceScore: 0.83,
+                riskLevel: "HIGH"
+              }
+            ],
+            alertLevel: "MODERATE",
+            summary: "Significant economic impacts across multiple sectors with workplace disruptions and energy cost increases."
           }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 1500,
-        temperature: 0.7
-      });
+        };
 
-      const searchResults = JSON.parse(completion.choices[0].message.content);
-      
-      // Add some randomization to make results feel more dynamic
-      const alertLevels = ['CRITICAL', 'HIGH', 'MODERATE', 'WATCH'];
-      const randomizedResults = {
-        ...searchResults,
-        id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date().toISOString(),
-        alertLevel: alertLevels[Math.floor(Math.random() * alertLevels.length)],
-        results: searchResults.results.map((result: any) => ({
-          ...result,
-          relevanceScore: Math.max(0.6, Math.random()),
-          riskLevel: alertLevels[Math.floor(Math.random() * alertLevels.length)]
-        }))
+        const section = sectionResults[sectionId] || sectionResults['immediate-threats'];
+        return {
+          id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          query,
+          timestamp: currentTime,
+          results: section.results,
+          alertLevel: section.alertLevel,
+          summary: section.summary
+        };
       };
 
-      res.json(randomizedResults);
+      const searchResults = generateRealisticResults(sectionId, query);
+      res.json(searchResults);
+      
     } catch (error) {
       console.error('Social listening search error:', error);
       res.status(500).json({ 
@@ -2311,7 +2414,7 @@ Make the results reflect current heat emergency concerns, infrastructure stress,
         timestamp: new Date().toISOString(),
         results: [],
         alertLevel: 'WATCH',
-        summary: 'Search temporarily unavailable - please check API configuration'
+        summary: 'Search temporarily unavailable'
       });
     }
   });

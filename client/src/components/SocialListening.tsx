@@ -406,9 +406,9 @@ const SocialListening: React.FC = () => {
                     </div>
                     
                     <AnimatePresence>
-                      {section.results.slice(0, 2).map((result) => (
+                      {section.results.slice(0, 2).map((result, resultIndex) => (
                         <motion.div
-                          key={result.id}
+                          key={`${section.id}-${result.id}-${resultIndex}`}
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
