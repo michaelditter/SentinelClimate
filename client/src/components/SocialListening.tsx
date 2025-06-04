@@ -424,16 +424,34 @@ const SocialListening: React.FC = () => {
                           </div>
                           
                           {result.results.length > 0 && (
-                            <div className="space-y-1">
-                              <div className="text-sm text-white font-medium">
+                            <div className="space-y-2">
+                              <a 
+                                href={result.results[0].url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="block text-sm text-blue-300 font-medium hover:text-blue-200 underline transition-colors"
+                              >
                                 {result.results[0].title.length > 60 
                                   ? `${result.results[0].title.substring(0, 60)}...` 
                                   : result.results[0].title}
-                              </div>
+                              </a>
                               <div className="text-xs text-gray-400">
                                 {result.results[0].snippet.length > 100 
                                   ? `${result.results[0].snippet.substring(0, 100)}...` 
                                   : result.results[0].snippet}
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500">
+                                  Source: {result.results[0].source}
+                                </span>
+                                <a 
+                                  href={result.results[0].url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 underline"
+                                >
+                                  View Article →
+                                </a>
                               </div>
                             </div>
                           )}
