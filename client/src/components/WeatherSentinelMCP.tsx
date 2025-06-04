@@ -130,7 +130,7 @@ interface EmergencyPhase {
 
 interface AgentStatus {
   id: string;
-  name: 'SENTINEL' | 'MEDIC' | 'DISPATCHER' | 'FIELD_OPS' | 'COMMANDER';
+  name: 'SENTINEL' | 'MEDIC' | 'DISPATCHER' | 'COMMANDER';
   icon: React.ReactNode;
   status: 'STANDBY' | 'MONITORING' | 'THREAT_DETECTED' | 'ANALYZING' | 'COORDINATING' | 'DEPLOYING' | 'ACTIVE' | 'VERIFYING';
   description: string;
@@ -243,20 +243,6 @@ export default function WeatherSentinelMCP() {
     },
     {
       id: '4',
-      name: 'FIELD_OPS',
-      icon: <Truck className="w-8 h-8 text-orange-400" />,
-      status: 'STANDBY',
-      description: 'Field Operations',
-      currentActivity: 'Unit Status Check',
-      metrics: {
-        dataProcessed: 0,
-        predictionsGenerated: 0,
-        resourcesDeployed: 0,
-        responseTime: '--'
-      }
-    },
-    {
-      id: '5',
       name: 'COMMANDER',
       icon: <Building className="w-8 h-8 text-purple-400" />,
       status: 'STANDBY',
@@ -546,20 +532,7 @@ export default function WeatherSentinelMCP() {
       });
 
       setAgents(prev => prev.map(agent => 
-        agent.name === 'FIELD_OPS' 
-          ? { 
-              ...agent, 
-              status: 'DEPLOYING', 
-              description: 'Field deployment active',
-              currentActivity: '8 mobile units deployed, 5 centers opening',
-              metrics: {
-                dataProcessed: 654,
-                predictionsGenerated: 2,
-                resourcesDeployed: 23,
-                responseTime: '3 minutes'
-              }
-            }
-          : agent
+        agent
       ));
       setDemoProgress(80);
     }, 14000);
@@ -1049,27 +1022,24 @@ export default function WeatherSentinelMCP() {
                   {demoStep === 1 && 'PHASE 1: ENVIRONMENTAL DETECTION'}
                   {demoStep === 2 && 'PHASE 2: HEALTHCARE ANALYSIS'}
                   {demoStep === 3 && 'PHASE 3: RESOURCE VERIFICATION'}
-                  {demoStep === 4 && 'PHASE 4: FIELD DEPLOYMENT'}
-                  {demoStep === 5 && 'PHASE 5: EMERGENCY COORDINATION'}
-                  {demoStep === 6 && 'PHASE 6: MASS ALERT SYSTEM'}
+                  {demoStep === 4 && 'PHASE 4: EMERGENCY COORDINATION'}
+                  {demoStep === 5 && 'PHASE 5: MASS ALERT SYSTEM'}
                 </h2>
                 
                 <div className="text-xl text-gray-300 mb-6">
                   {demoStep === 1 && 'SENTINEL Agent detects extreme heat conditions: 124°F heat index in Harris County'}
                   {demoStep === 2 && 'MEDIC Agent analyzing vulnerable populations: 45,000+ high-risk residents identified'}
                   {demoStep === 3 && 'DISPATCHER Agent verifying resources: 15 cooling centers ready, 28 EMS units available'}
-                  {demoStep === 4 && 'FIELD_OPS Agent deploying emergency resources to vulnerable areas'}
-                  {demoStep === 5 && 'Multi-agent coordination complete: Emergency response fully activated'}
-                  {demoStep === 6 && 'Mass text alert system activated: Field commanders receiving deployment orders'}
+                  {demoStep === 4 && 'COMMANDER Agent coordinating emergency response deployment'}
+                  {demoStep === 5 && 'Mass text alert system activated: Field commanders receiving deployment orders'}
                 </div>
                 
                 <div className="bg-black/40 rounded-xl p-4 text-sm text-cyan-300 font-mono">
                   {demoStep === 1 && 'SYSTEM: Environmental monitoring active → Heat index threshold exceeded → Threat level: CRITICAL'}
                   {demoStep === 2 && 'MEDIC: Vulnerable population analysis → Fifth Ward: 12,000 residents → Third Ward: 8,500 residents'}
                   {demoStep === 3 && 'DISPATCH: Resource inventory complete → Cooling centers verified → EMS units positioned'}
-                  {demoStep === 4 && 'FIELD_OPS: Emergency deployment initiated → Units dispatching to high-risk areas'}
-                  {demoStep === 5 && 'COMMAND: Multi-agent coordination active → Real-time resource tracking enabled'}
-                  {demoStep === 6 && 'ALERT: Mass notification system active → Field commanders receiving specific orders'}
+                  {demoStep === 4 && 'COMMAND: Multi-agent coordination active → Emergency deployment authorized'}
+                  {demoStep === 5 && 'ALERT: Mass notification system active → Field commanders receiving specific orders'}
                 </div>
                 
                 <div className="mt-6">
