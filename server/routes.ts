@@ -1134,6 +1134,215 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced healthcare predictions functions
+  function calculatePredictedEDVisits(weatherData: any, populationData: any) {
+    const baselineEDVisits = populationData.population * 0.00035; // 0.035% daily baseline
+    
+    let heatMultiplier = 1.0;
+    const heatIndex = weatherData.heatIndex;
+    
+    if (heatIndex >= 115) heatMultiplier = 3.2;
+    else if (heatIndex >= 110) heatMultiplier = 2.8;
+    else if (heatIndex >= 105) heatMultiplier = 2.2;
+    else if (heatIndex >= 100) heatMultiplier = 1.6;
+    else if (heatIndex >= 95) heatMultiplier = 1.3;
+    
+    const durationMultiplier = weatherData.duration > 48 ? 1.4 : 1.0;
+    const vulnerabilityMultiplier = 1 + (populationData.vulnerablePopulation / populationData.population);
+    const powerOutageMultiplier = weatherData.gridStatus === 'EMERGENCY' ? 2.1 : 
+                                 weatherData.gridStatus === 'WARNING' ? 1.5 : 1.0;
+    
+    const predictedVisits = Math.round(
+      baselineEDVisits * heatMultiplier * durationMultiplier * 
+      vulnerabilityMultiplier * powerOutageMultiplier
+    );
+    
+    return {
+      predictedEDVisits: predictedVisits,
+      baselineEDVisits: Math.round(baselineEDVisits),
+      increasePercentage: Math.round(((predictedVisits / baselineEDVisits) - 1) * 100),
+      breakdown: {
+        heatFactor: heatMultiplier,
+        durationFactor: durationMultiplier,
+        vulnerabilityFactor: vulnerabilityMultiplier,
+        powerOutageFactor: powerOutageMultiplier
+      }
+    };
+  }
+
+  function calculateMentalHealthDemand(weatherData: any, populationData: any) {
+    const baselineCounseling = populationData.population * 0.002;
+    const baselineCrisis = populationData.population * 0.000085;
+    
+    let mentalHealthMultiplier = 1.0;
+    const heatIndex = weatherData.heatIndex;
+    
+    if (heatIndex >= 110) mentalHealthMultiplier = 2.8;
+    else if (heatIndex >= 105) mentalHealthMultiplier = 2.2;
+    else if (heatIndex >= 100) mentalHealthMultiplier = 1.8;
+    else if (heatIndex >= 95) mentalHealthMultiplier = 1.4;
+    
+    const powerStressMultiplier = weatherData.gridStatus === 'EMERGENCY' ? 1.9 : 
+                                 weatherData.gridStatus === 'WARNING' ? 1.4 : 1.0;
+    
+    return {
+      predictedCounselingDemand: Math.round(baselineCounseling * mentalHealthMultiplier * powerStressMultiplier),
+      predictedCrisisCalls: Math.round(baselineCrisis * mentalHealthMultiplier * 1.6),
+      telehealthSessions: Math.round(baselineCounseling * mentalHealthMultiplier * 0.7),
+      increasePercentage: Math.round((mentalHealthMultiplier * powerStressMultiplier - 1) * 100)
+    };
+  }
+
+  function calculateSpecialtyCare(weatherData: any, populationData: any) {
+    const predictions: any = {};
+    
+    // Cardiology
+    const cardiacBaselineDaily = populationData.population * 0.00018;
+    let cardiacMultiplier = 1.0;
+    if (weatherData.heatIndex >= 105) cardiacMultiplier = 3.4;
+    else if (weatherData.heatIndex >= 100) cardiacMultiplier = 2.6;
+    else if (weatherData.heatIndex >= 95) cardiacMultiplier = 1.8;
+    
+    predictions.cardiology = {
+      predictedVisits: Math.round(cardiacBaselineDaily * cardiacMultiplier),
+      increasePercentage: Math.round((cardiacMultiplier - 1) * 100)
+    };
+    
+    // Nephrology
+    const nephroBaselineDaily = populationData.population * 0.000045;
+    let nephroMultiplier = 1.0;
+    if (weatherData.heatIndex >= 110) nephroMultiplier = 4.2;
+    else if (weatherData.heatIndex >= 105) nephroMultiplier = 3.1;
+    else if (weatherData.heatIndex >= 100) nephroMultiplier = 2.3;
+    
+    predictions.nephrology = {
+      predictedVisits: Math.round(nephroBaselineDaily * nephroMultiplier),
+      increasePercentage: Math.round((nephroMultiplier - 1) * 100)
+    };
+    
+    return predictions;
+  }
+
+  // Enhanced county analysis endpoint with healthcare predictions
+  app.get("/api/county-analysis/:fips", async (req, res) => {
+    try {
+      const { fips } = req.params;
+      const userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
+      
+      // County profiles data
+      const countyProfiles: any = {
+        "48201": {
+          name: "Harris County",
+          state: "TX",
+          population: 4731145,
+          fips: "48201",
+          vulnerabilityFactors: {
+            seniorPopulation: 0.124,
+            housingWithoutAC: 0.08,
+            povertyRate: 0.158,
+            chronicConditions: 0.45,
+            urbanHeatIsland: 8.2
+          },
+          providerBaselines: {
+            cardiology: { needed: 280, nationalRatio: 5.8 },
+            emergency: { needed: 720, nationalRatio: 15.2 },
+            nephrology: { needed: 57, nationalRatio: 1.2 },
+            psychiatry: { needed: 620, nationalRatio: 13.1 },
+            mentalHealth: { needed: 850, nationalRatio: 18.0 },
+            primaryCare: { needed: 3548, nationalRatio: 75.0 }
+          }
+        },
+        "04013": {
+          name: "Maricopa County",
+          state: "AZ",
+          population: 4485414,
+          fips: "04013",
+          vulnerabilityFactors: {
+            seniorPopulation: 0.168,
+            housingWithoutAC: 0.02,
+            povertyRate: 0.134,
+            chronicConditions: 0.52,
+            urbanHeatIsland: 12.1
+          },
+          providerBaselines: {
+            cardiology: { needed: 260, nationalRatio: 5.8 },
+            emergency: { needed: 682, nationalRatio: 15.2 },
+            nephrology: { needed: 54, nationalRatio: 1.2 },
+            psychiatry: { needed: 588, nationalRatio: 13.1 },
+            mentalHealth: { needed: 807, nationalRatio: 18.0 },
+            primaryCare: { needed: 3364, nationalRatio: 75.0 }
+          }
+        }
+      };
+
+      const countyProfile = countyProfiles[fips] || countyProfiles["48201"];
+      
+      // Fetch weather data
+      const weatherResponse = await fetch(`https://api.weather.gov/points/29.7604,-95.3698`, {
+        headers: { 'User-Agent': userAgent }
+      });
+      const weatherData = weatherResponse.ok ? await weatherResponse.json() : null;
+      
+      // Fetch grid data
+      const gridData = await getCurrentPowerGridData();
+      
+      // Calculate enhanced predictions
+      const heatIndex = extractHeatIndexFromWeatherAPI(weatherData);
+      const weatherAnalysis = {
+        heatIndex,
+        gridStatus: calculateGridStatus(gridData?.reserveMargin || 24805),
+        duration: 72 // 3-day heat event simulation
+      };
+      
+      const populationData = {
+        population: countyProfile.population,
+        vulnerablePopulation: Math.round(countyProfile.population * countyProfile.vulnerabilityFactors.seniorPopulation),
+        seniorPopulation: countyProfile.vulnerabilityFactors.seniorPopulation
+      };
+      
+      const edPredictions = calculatePredictedEDVisits(weatherAnalysis, populationData);
+      const mentalHealthPredictions = calculateMentalHealthDemand(weatherAnalysis, populationData);
+      const specialtyCarePredictions = calculateSpecialtyCare(weatherAnalysis, populationData);
+      
+      const enhancedAnalysis = {
+        name: countyProfile.name,
+        fips: countyProfile.fips,
+        population: countyProfile.population,
+        lastUpdated: new Date().toISOString(),
+        overallRisk: calculateOverallRiskLevel(weatherData, gridData, null),
+        weather: {
+          heatIndex,
+          temperature: extractTemperature(weatherData),
+          humidity: extractHumidity(weatherData),
+          alertLevel: extractAlertLevel(weatherData),
+          trend: calculateTemperatureTrend(weatherData)
+        },
+        grid: {
+          reserveMargin: gridData?.reserveMargin || 24805,
+          capacityUtilization: calculateCapacityUtilization(gridData),
+          status: calculateGridStatus(gridData?.reserveMargin || 24805)
+        },
+        healthcare: {
+          predictions: edPredictions,
+          mentalHealth: mentalHealthPredictions,
+          specialtyCare: specialtyCarePredictions,
+          availableBeds: calculateAvailableBeds(null),
+          totalBeds: calculateTotalBeds(null),
+          edCapacity: calculateEDCapacity(null),
+          avgResponseTime: calculateResponseTime(null)
+        },
+        vulnerable: calculateVulnerablePopulation(fips, null),
+        providers: analyzeProviderCoverage(fips, null),
+        forecast: generate48HourForecast(fips, weatherData, gridData, null)
+      };
+      
+      res.json(enhancedAnalysis);
+    } catch (error) {
+      console.error('Error generating enhanced county analysis:', error);
+      res.status(500).json({ error: 'Failed to generate enhanced county analysis' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
