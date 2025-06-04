@@ -34,7 +34,7 @@ import DecisionFlow from './agents/DecisionFlow';
 import PerformanceMetrics from './agents/PerformanceMetrics';
 import ScenarioGenerator from './simulation/ScenarioGenerator';
 import BeforeAfterComparison from './simulation/BeforeAfterComparison';
-import EconomicCalculator from './simulation/EconomicCalculator';
+
 import EnhancedCountyDeepDive from './EnhancedCountyDeepDive';
 import RealTimeKPIs from './RealTimeKPIs';
 import CountyProjections from './CountyProjections';
@@ -50,7 +50,7 @@ import { useSimulation } from '@/hooks/useSimulation';
 import { County } from '@/types/geo.types';
 import { SimulationScenario } from '@/types/simulation.types';
 
-type ViewType = 'weather-sentinel-mcp' | 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'economic-analysis' | 'county-analysis' | 'trigger-outreach';
+type ViewType = 'weather-sentinel-mcp' | 'mission-control' | 'risk-assessment' | 'agent-coordination' | 'crisis-simulation' | 'county-analysis' | 'trigger-outreach';
 
 const SentinelAI: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -525,13 +525,7 @@ const SentinelAI: React.FC = () => {
           </div>
         );
 
-      case 'economic-analysis':
-        return (
-          <EconomicCalculator
-            simulationResult={currentResult}
-            isActive={simulationRunning}
-          />
-        );
+
 
       case 'county-analysis':
         return (
@@ -561,7 +555,6 @@ const SentinelAI: React.FC = () => {
     { key: 'agent-coordination', icon: Bot, label: 'Agent Coordination', emoji: '🤖' },
     { key: 'crisis-simulation', icon: Flame, label: 'Crisis Simulation', emoji: '⚡' },
     { key: 'trigger-outreach', icon: Phone, label: 'Trigger Outreach', emoji: '📞' },
-    { key: 'economic-analysis', icon: Banknote, label: 'Economic Analysis', emoji: '💰' },
     { key: 'county-analysis', icon: Building, label: 'County Deep Dive', emoji: '🏙️' }
   ];
 
@@ -586,10 +579,7 @@ const SentinelAI: React.FC = () => {
       title: 'Crisis Simulation',
       subtitle: 'What-if scenario modeling and impact analysis'
     },
-    'economic-analysis': {
-      title: 'Economic Analysis',
-      subtitle: 'Cost-benefit analysis and ROI projections'
-    },
+
     'county-analysis': {
       title: 'County Deep Dive Analysis',
       subtitle: 'Comprehensive county-level health and infrastructure assessment'
