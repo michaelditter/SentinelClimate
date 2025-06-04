@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Phone, Brain, AlertTriangle, Target, Eye, MessageSquare, Play, PhoneCall, Volume2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Phone, Brain, AlertTriangle, Target, Eye, MessageSquare, Play, PhoneCall, Volume2, Users } from 'lucide-react';
 
 interface TriggerOutreachProps {
   selectedCounty?: any;
@@ -44,6 +45,9 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
   const [callInProgress, setCallInProgress] = useState(false);
   const [emergencyCallTarget, setEmergencyCallTarget] = useState({ name: '', phoneNumber: '' });
   const [selectedAgent, setSelectedAgent] = useState<string>('COMMANDER');
+  const [customPhoneNumbers, setCustomPhoneNumbers] = useState<{[key: string]: string}>({});
+  const [customContactNames, setCustomContactNames] = useState<{[key: string]: string}>({});
+  const [selectedAgentForContact, setSelectedAgentForContact] = useState<{[key: string]: string}>({});
 
   const scenarios: CrisisScenario[] = [
     {
@@ -191,29 +195,73 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
     };
   };
 
-  const initiateEmergencyCall = async (contact: any, agentType: string) => {
+  const getAgentCommunicationScript = (agentType: string, contactRole: string, scenarioName: string) => {
+    const scripts = {
+      SENTINEL: {
+        'County Emergency Manager': `This is Sentinel AI environmental monitoring system. We've detected critical heat dome conditions in your county with heat index exceeding 108°F and grid instability. Immediate activation of cooling centers and vulnerable population outreach is recommended.`,
+        'Hospital System Director': `Sentinel AI weather monitoring alert: Extreme heat conditions detected. Our models predict 40% increase in heat-related ED visits within next 6 hours. Consider activating surge protocols.`,
+        'Grid Operations Center': `Sentinel AI environmental alert: Sustained extreme heat is creating unprecedented cooling demand. Current conditions may stress grid beyond safe operating parameters.`
+      },
+      MEDIC: {
+        'County Emergency Manager': `MEDIC AI healthcare prediction system reporting: Our analysis indicates ${scenarioName} will result in 680+ additional hospitalizations. EMS resources should be pre-positioned in high-risk neighborhoods.`,
+        'Hospital System Director': `MEDIC AI clinical forecast: Heat emergency will overwhelm current ED capacity by 187%. Recommend immediate implementation of surge protocols and staff recall procedures.`,
+        'Grid Operations Center': `MEDIC AI healthcare systems alert: Critical medical facilities require priority power allocation during this heat emergency to maintain life-support systems.`
+      },
+      DISPATCHER: {
+        'County Emergency Manager': `DISPATCHER AI resource coordination: ${scenarioName} requires immediate deployment of mobile cooling units to zones with highest vulnerable population density. 12 sites identified for immediate activation.`,
+        'Hospital System Director': `DISPATCHER AI logistics alert: Recommend activating inter-facility patient transfer protocols. We've identified capacity at regional facilities to handle overflow.`,
+        'Grid Operations Center': `DISPATCHER AI emergency coordination: Critical infrastructure including hospitals and cooling centers require priority power maintenance during grid stress conditions.`
+      },
+      COMMANDER: {
+        'County Emergency Manager': `COMMANDER AI crisis management: ${scenarioName} represents a multi-agency emergency requiring immediate escalation to state emergency management. Recommend declaring local emergency status.`,
+        'Hospital System Director': `COMMANDER AI strategic alert: This heat crisis will exceed local healthcare capacity. Recommend activating mutual aid agreements with surrounding hospital systems immediately.`,
+        'Grid Operations Center': `COMMANDER AI emergency protocol: Grid failure during extreme heat represents catastrophic risk. Recommend coordinating with state emergency management for power restoration priorities.`
+      }
+    };
+    
+    return scripts[agentType as keyof typeof scripts]?.[contactRole as keyof typeof scripts.SENTINEL] || `${agentType} AI system alert regarding ${scenarioName}. Immediate coordination required.`;
+  };
+
+  const initiateEmergencyCall = async (contact: any, contactIndex: number) => {
+    const agentType = selectedAgentForContact[contactIndex] || 'COMMANDER';
+    const phoneNumber = customPhoneNumbers[contactIndex] || contact.phone;
+    const contactName = customContactNames[contactIndex] || contact.name;
+    
+    if (!agentType) {
+      alert('Please select an AI agent first');
+      return;
+    }
+    
     setCallInProgress(true);
+    
     try {
+      const communicationScript = getAgentCommunicationScript(agentType, contact.role, selectedScenario?.name || 'Crisis Scenario');
+      
       const response = await fetch('/api/emergency-call', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          targetPhone: contact.phone,
-          targetName: contact.name,
+          targetPhone: phoneNumber,
+          targetName: contactName,
           agentType,
           scenario: selectedScenario,
-          analysis: agentAnalysis
+          analysis: agentAnalysis,
+          communicationScript
         })
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('Emergency call initiated:', result);
+        alert(`${agentType} agent initiated emergency call to ${contactName} (${phoneNumber})\n\nScript: "${communicationScript}"`);
+      } else {
+        alert('Failed to initiate emergency call');
       }
     } catch (error) {
       console.error('Error initiating emergency call:', error);
+      alert('Error initiating emergency call');
     }
     setCallInProgress(false);
   };
@@ -423,26 +471,52 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                           <div className="space-y-3">
                             <div>
                               <div className="font-medium">{contact.role}</div>
-                              <div className="text-sm text-gray-600">{contact.name}</div>
-                              <div className="text-sm font-mono">{contact.phone}</div>
+                              <Input
+                                placeholder={contact.name}
+                                value={customContactNames[index] || ''}
+                                onChange={(e) => setCustomContactNames({...customContactNames, [index]: e.target.value})}
+                                className="text-sm mb-2"
+                              />
+                              <Input
+                                placeholder={contact.phone}
+                                value={customPhoneNumbers[index] || ''}
+                                onChange={(e) => setCustomPhoneNumbers({...customPhoneNumbers, [index]: e.target.value})}
+                                className="text-sm font-mono"
+                              />
                             </div>
                             
                             <div className="space-y-2">
-                              <Select onValueChange={setSelectedAgent}>
+                              <Select 
+                                value={selectedAgentForContact[index] || 'COMMANDER'}
+                                onValueChange={(value) => setSelectedAgentForContact({...selectedAgentForContact, [index]: value})}
+                              >
                                 <SelectTrigger className="h-8">
                                   <SelectValue placeholder="Select AI Agent" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {agents.map((agent) => (
                                     <SelectItem key={agent.id} value={agent.name}>
-                                      {agent.name}
+                                      <div className="flex items-center">
+                                        <Users className="h-3 w-3 mr-2" />
+                                        {agent.name}
+                                      </div>
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                               
+                              {selectedAgentForContact[index] && (
+                                <div className="text-xs text-gray-600 p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                                  <strong>Script Preview:</strong> {getAgentCommunicationScript(
+                                    selectedAgentForContact[index] || 'COMMANDER', 
+                                    contact.role, 
+                                    selectedScenario?.name || 'Crisis Scenario'
+                                  ).substring(0, 100)}...
+                                </div>
+                              )}
+                              
                               <Button 
-                                onClick={() => initiateEmergencyCall(contact, selectedAgent)}
+                                onClick={() => initiateEmergencyCall(contact, index)}
                                 disabled={callInProgress}
                                 size="sm"
                                 className="w-full"
@@ -456,7 +530,7 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                                 ) : (
                                   <>
                                     <PhoneCall className="h-3 w-3 mr-2" />
-                                    Emergency Call
+                                    {selectedAgentForContact[index] || 'COMMANDER'} Emergency Call
                                   </>
                                 )}
                               </Button>
