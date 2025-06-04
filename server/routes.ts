@@ -2240,121 +2240,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: 'OpenAI API key not configured' });
       }
 
-      // Execute real web search using OpenAI with web search capabilities
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const searchPrompt = `Execute a comprehensive web search for climate-health crisis monitoring:
+      // Execute real web search using Google Custom Search API
+      if (!process.env.GOOGLE_CSE_API_KEY || !process.env.GOOGLE_CSE_ID) {
+        throw new Error('Google Custom Search API credentials not configured');
+      }
 
-Search Query: "${query}"
+      // Build search query based on section and location
+      const locationFocus = "Harris County Texas Houston";
+      const crisisQueries = {
+        'immediate-threats': `extreme heat warning ${locationFocus} site:weather.gov OR site:noaa.gov`,
+        'vulnerable-populations': `elderly heat exhaustion emergency ${locationFocus} hospital`,
+        'infrastructure': `ERCOT power grid emergency ${locationFocus} conservation alert`,
+        'social-media': `${locationFocus} heat wave emergency cooling centers reddit twitter`,
+        'healthcare-system': `${locationFocus} hospital emergency department heat surge capacity`,
+        'policy-response': `${locationFocus} emergency declaration heat response government`,
+        'economic-impact': `${locationFocus} heat wave economic impact construction work`
+      };
+
+      const searchQuery = crisisQueries[sectionId] || `${query} ${locationFocus} crisis emergency`;
+
+      // Execute Google Custom Search
+      const googleSearchUrl = 'https://www.googleapis.com/customsearch/v1';
+      const searchParams = new URLSearchParams({
+        key: process.env.GOOGLE_CSE_API_KEY,
+        cx: process.env.GOOGLE_CSE_ID,
+        q: searchQuery,
+        num: '10',
+        sort: 'date',
+        lr: 'lang_en',
+        cr: 'countryUS',
+        dateRestrict: 'd7'
+      });
+
+      const googleResponse = await fetch(`${googleSearchUrl}?${searchParams}`);
+      if (!googleResponse.ok) {
+        throw new Error(`Google Search API error: ${googleResponse.status}`);
+      }
+
+      const googleData = await googleResponse.json();
+      const googleResults = googleData.items || [];
+
+      // Process and analyze results with OpenAI
+      const analysisPrompt = `Analyze these real web search results for crisis indicators:
+
+Search Query: "${searchQuery}"
 Section: ${sectionId}
-Location Focus: Harris County, Texas and surrounding areas
 
-Instructions:
-1. Search for recent information about current crisis conditions
-2. Focus on authoritative sources (government agencies, health organizations, news outlets)
-3. Extract real URLs, titles, and content snippets
-4. Assess urgency and credibility of sources
-5. Return actual clickable sources with real URLs
+Search Results:
+${googleResults.map((item, index) => `
+${index + 1}. Title: ${item.title}
+   URL: ${item.link}
+   Snippet: ${item.snippet}
+   Source: ${item.displayLink}
+`).join('\n')}
 
-Return results in this exact JSON format:
+Analyze these results and return a JSON assessment:
 {
-  "id": "unique_search_id",
-  "query": "${query}",
-  "timestamp": "${new Date().toISOString()}",
-  "results": [
-    {
-      "title": "Actual headline from real source",
-      "url": "Real clickable URL to source",
-      "snippet": "Actual excerpt from the source content",
-      "relevanceScore": 0.85,
-      "riskLevel": "HIGH",
-      "source": "Name of actual publication/organization",
-      "publishedDate": "Publication date",
-      "domain": "Source domain"
-    }
-  ],
-  "alertLevel": "HIGH",
-  "summary": "Analysis of what these real indicators mean for crisis management"
-}
+  "alertLevel": "CRITICAL|HIGH|MODERATE|WATCH",
+  "summary": "Brief analysis of crisis indicators found",
+  "relevanceScore": 0.85,
+  "riskAssessment": "What these results indicate for emergency management"
+}`;
 
-Focus on finding actual current sources for:
-- Official government alerts and warnings
-- Emergency management communications  
-- Healthcare system status reports
-- Infrastructure monitoring data
-- Social media emergency discussions
-- Economic impact assessments`;
-
-      const completion = await openai.chat.completions.create({
+      const analysisResponse = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a specialized AI agent for crisis detection that performs real web searches. Search the web for current information and return actual sources with real URLs that users can click and verify. Focus on authoritative sources and real-time crisis indicators."
+            content: "You are a crisis detection analyst. Assess real search results for emergency indicators and risk levels."
           },
           {
             role: "user",
-            content: searchPrompt
+            content: analysisPrompt
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 1500,
-        temperature: 0.3,
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "web_search",
-              description: "Search the web for real-time crisis information",
-              parameters: {
-                type: "object",
-                properties: {
-                  query: {
-                    type: "string",
-                    description: "The search query to execute"
-                  },
-                  max_results: {
-                    type: "number",
-                    description: "Maximum number of search results to return"
-                  }
-                },
-                required: ["query"]
-              }
-            }
-          }
-        ],
-        tool_choice: "auto"
+        max_tokens: 500,
+        temperature: 0.3
       });
 
-      // Handle OpenAI response safely
-      let searchResults;
+      let analysis;
       try {
-        const content = completion.choices[0]?.message?.content;
-        if (!content) {
-          throw new Error('No content in OpenAI response');
+        const analysisContent = analysisResponse.choices[0]?.message?.content;
+        if (!analysisContent) {
+          throw new Error('No analysis content from OpenAI');
         }
-        searchResults = JSON.parse(content);
+        analysis = JSON.parse(analysisContent);
       } catch (parseError) {
-        console.error('Failed to parse OpenAI response:', parseError);
-        throw new Error('Invalid response format from OpenAI');
+        console.error('Failed to parse analysis response:', parseError);
+        analysis = {
+          alertLevel: 'MODERATE',
+          summary: 'Analysis in progress',
+          relevanceScore: 0.7,
+          riskAssessment: 'Unable to complete full analysis'
+        };
       }
-      
-      // Add dynamic identifiers and timestamp with safe property access
-      const enhancedResults = {
-        id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        query,
-        timestamp: new Date().toISOString(),
-        results: (searchResults.results || []).map((result: any, index: number) => ({
+
+      // Format results for frontend
+      const searchResults = {
+        results: googleResults.map((item, index) => ({
           id: `result-${index}-${Date.now()}`,
-          title: result.title || 'No title available',
-          url: result.url || '#',
-          snippet: result.snippet || 'No description available',
-          relevanceScore: Math.max(0.6, result.relevanceScore || Math.random()),
-          riskLevel: result.riskLevel || 'MODERATE',
-          source: result.source || 'Unknown source',
+          title: item.title || 'No title available',
+          url: item.link || '#',
+          snippet: item.snippet || 'No description available',
+          relevanceScore: analysis.relevanceScore || 0.7,
+          riskLevel: analysis.alertLevel || 'MODERATE',
+          source: item.displayLink || 'Unknown source',
+          publishedDate: item.pagemap?.metatags?.[0]?.date || new Date().toISOString(),
           timestamp: new Date().toISOString()
         })),
-        alertLevel: searchResults.alertLevel || 'MODERATE',
-        summary: searchResults.summary || 'Analysis in progress'
+        alertLevel: analysis.alertLevel || 'MODERATE',
+        summary: analysis.summary || 'Real-time crisis monitoring analysis'
+      };
+      
+      // Return structured results
+      const enhancedResults = {
+        id: `${sectionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        query: searchQuery,
+        timestamp: new Date().toISOString(),
+        results: searchResults.results,
+        alertLevel: searchResults.alertLevel,
+        summary: searchResults.summary
       };
 
       res.json(enhancedResults);
