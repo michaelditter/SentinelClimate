@@ -121,7 +121,7 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
     return <Activity className="h-4 w-4 text-gray-500" />;
   };
 
-  if (!kpiData) return <div className="animate-pulse">Loading real-time data...</div>;
+  if (!kpiData || !kpiData.airQuality) return <div className="animate-pulse">Loading real-time data...</div>;
 
   return (
     <div className="space-y-6">
@@ -336,6 +336,12 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
               <div className="text-gray-600">Station: {COUNTY_OPTIONS[selectedCounty].weatherStation}</div>
               <div className="text-gray-600">Forecast horizon: {kpiData.weather.daysOut} days</div>
               <div className="text-gray-600">Next update: {kpiData.weather.nextUpdate}</div>
+            </div>
+            <div>
+              <div className="font-medium">EPA Air Quality</div>
+              <div className="text-gray-600">AQI: {kpiData.airQuality.aqi} ({kpiData.airQuality.category})</div>
+              <div className="text-gray-600">Pollutant: {kpiData.airQuality.primaryPollutant}</div>
+              <div className="text-gray-600">Source: {kpiData.airQuality.source}</div>
             </div>
             <div>
               <div className="font-medium">CDC Health Surveillance</div>
