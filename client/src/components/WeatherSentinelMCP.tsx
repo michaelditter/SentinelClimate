@@ -27,7 +27,8 @@ import {
   AlertCircle,
   Power,
   CloudRain,
-  Gauge
+  Gauge,
+  X
 } from 'lucide-react';
 
 interface EnvironmentalData {
