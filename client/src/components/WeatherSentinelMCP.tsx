@@ -1026,7 +1026,7 @@ export default function WeatherSentinelMCP() {
 
         {/* Active Alerts Detail Modal */}
         {showAlertsModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed top-20 bottom-0 left-80 right-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-500/50 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="p-8">
                 {/* Modal Header */}
