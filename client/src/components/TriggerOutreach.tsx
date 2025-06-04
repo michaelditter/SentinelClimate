@@ -94,6 +94,20 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
         economicImpact: '$950M',
         affectedPopulation: 98000
       }
+    },
+    {
+      id: 'neches_river_flooding',
+      name: 'Neches River Flooding - East Texas',
+      county: 'Anderson, Cherokee, Angelina, Trinity, Polk Counties, TX',
+      severity: 'HIGH',
+      description: 'Active flooding event affecting rural East Texas counties with Neches River at 16.7 feet (0.7 feet above flood stage)',
+      triggers: ['River stage >16.0 feet (flood stage)', 'Rural population displacement', 'Emergency shelter activation needed'],
+      projectedImpact: {
+        deaths: 3,
+        hospitalizations: 45,
+        economicImpact: '$125M',
+        affectedPopulation: 8500
+      }
     }
   ];
 
@@ -216,6 +230,41 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
   };
 
   const generateAuthenticAnalysis = (scenario: CrisisScenario) => {
+    if (scenario.id === 'neches_river_flooding') {
+      return {
+        scenarioId: scenario.id,
+        riskLevel: scenario.severity,
+        triggersMet: scenario.triggers.slice(0, 2),
+        agentRecommendations: {
+          SENTINEL: {
+            assessment: 'Neches River at 16.7 feet, 0.7 feet above flood stage',
+            action: 'Monitor river levels and weather conditions for additional rainfall',
+            confidence: 96
+          },
+          MEDIC: {
+            assessment: 'Rural population displacement requires medical support deployment',
+            action: 'Deploy mobile medical units to Alto, Neches, and Diboll areas',
+            confidence: 91
+          },
+          DISPATCHER: {
+            assessment: '3 mobile units needed for immediate deployment to affected areas',
+            action: 'Coordinate emergency shelter activation and supply distribution',
+            confidence: 94
+          },
+          COMMANDER: {
+            assessment: 'Multi-county flood emergency requires regional coordination',
+            action: 'Activate mutual aid agreements and state emergency resources',
+            confidence: 98
+          }
+        },
+        emergencyContacts: [
+          { role: 'Anderson County Emergency Coordinator', name: 'Emergency Management Office', phone: '+1-903-555-0101' },
+          { role: 'Cherokee County Emergency Management', name: 'Cherokee County EM', phone: '+1-903-555-0102' },
+          { role: 'East Texas Regional Emergency Response', name: 'Regional Coordinator', phone: '+1-903-555-0103' }
+        ]
+      };
+    }
+    
     return {
       scenarioId: scenario.id,
       riskLevel: scenario.severity,
@@ -251,6 +300,11 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
   };
 
   const getAgentCommunicationScript = (agentType: string, contactRole: string, scenarioName: string) => {
+    // Special script for Neches River flooding scenario
+    if (scenarioName.includes('Neches River Flooding')) {
+      return `This is Sentinel AI Emergency Coordination calling regarding the active Neches River flooding near Alto. Current situation: River stage at 16.7 feet, 0.7 feet above flood stage, affecting Anderson, Cherokee, Angelina, Trinity, and Polk counties. Immediate resource needs identified: 3 mobile emergency units for deployment to Alto, Neches, and Diboll areas. 2 emergency shelters with capacity for 150-200 people total. 6 medical personnel, prioritizing water rescue capabilities. 650 emergency supply kits for distribution. Can you confirm availability and coordinate deployment of these resources? This call is being logged for emergency response coordination.`;
+    }
+
     const scripts = {
       SENTINEL: {
         'County Emergency Manager': `This is Sentinel AI environmental monitoring system. We've detected critical heat dome conditions in your county with heat index exceeding 108°F and grid instability. Immediate activation of cooling centers and vulnerable population outreach is recommended.`,
