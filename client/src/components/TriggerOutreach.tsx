@@ -179,7 +179,7 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
   };
 
   const handleVoiceCall = async () => {
-    if (!customContactName || !customContactPhone || !selectedAgent) {
+    if (!customContactName || !customContactPhone) {
       alert('Please fill in all required fields');
       return;
     }
@@ -194,9 +194,9 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          agentType: selectedAgent,
           targetPhone: customContactPhone,
           targetName: customContactName,
+          agentType: 'CRISIS',
           analysisData: agentAnalysis
         })
       });
@@ -669,21 +669,7 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium mb-2">AI Agent Type</label>
-                    <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select AI agent" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {agents.map((agent) => (
-                          <SelectItem key={agent.id} value={agent.name}>
-                            {agent.name} - {agent.role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+
                 </div>
                 
                 <div className="space-y-4">
@@ -697,21 +683,19 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                     </div>
                   </div>
                   
-                  {selectedAgent && (
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                      <h4 className="font-medium mb-2">Script Preview</h4>
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
-                        {getScriptPreview(selectedAgent)}
-                      </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">AI Conversation Preview</h4>
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                      The ElevenLabs agent will have a natural conversation about the emergency situation, providing guidance on heat safety, cooling center locations, and when to seek medical attention. The agent can answer questions and provide personalized advice.
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
               
               <div className="flex justify-center">
                 <Button
                   onClick={handleVoiceCall}
-                  disabled={callInProgress || !customContactName || !customContactPhone || !selectedAgent}
+                  disabled={callInProgress || !customContactName || !customContactPhone}
                   className="bg-red-600 hover:bg-red-700 text-white px-8 py-3"
                   size="lg"
                 >

@@ -414,8 +414,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use ElevenLabs voice agent for AI-powered calling
           if (elevenlabsApiKey) {
             try {
-              // Make outbound call using ElevenLabs voice agent
-              const agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversations/outbound_call', {
+              // Make outbound call using ElevenLabs conversational agent
+              const agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversations', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -423,9 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 },
                 body: JSON.stringify({
                   agent_id: '***REMOVED-AGENT-ID***',
-                  agent_phone_number_id: '***REMOVED-PHONE-ID***',
-                  to_number: targetPhone.startsWith('+') ? targetPhone : `+1${targetPhone.replace(/\D/g, '')}`,
-                  message: `Hello ${targetName}, this is the Sentinel AI ${agentType} agent calling with an important climate health alert for your area. ${message.replace(/°F/g, 'degrees Fahrenheit')}`
+                  phone_number: targetPhone.startsWith('+') ? targetPhone : `+1${targetPhone.replace(/\D/g, '')}`,
+                  first_message: `Hello ${targetName}, this is the Sentinel AI Crisis Prevention System calling with an important climate health alert for your area. ${message.replace(/°F/g, 'degrees Fahrenheit')}`
                 })
               });
 
