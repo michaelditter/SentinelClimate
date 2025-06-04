@@ -2539,7 +2539,7 @@ If no results meet crisis relevance criteria, set isRelevant to false and filter
         };
       };
 
-      const fallbackResults = generateRealisticCrisisData(sectionId, query);
+      const fallbackResults = generateRealisticCrisisData(req.body.sectionId, req.body.query);
       res.json(fallbackResults);
     }
   });

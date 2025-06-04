@@ -88,38 +88,38 @@ export default function WeatherSentinelMCP() {
     }
   ]);
 
-  // Fetch real weather data
+  // Fetch real weather data from National Weather Service
   const fetchWeatherData = async () => {
     try {
-      console.log('Fetching weather data...');
-      const response = await fetch('/api/weather/houston');
-      if (!response.ok) throw new Error('Weather API error');
+      console.log('Fetching live weather data from National Weather Service...');
+      const response = await fetch('/api/weather-sentinel-live');
+      if (!response.ok) throw new Error('NWS API connection failed');
       
       const data = await response.json();
-      console.log('Weather data received:', data);
+      console.log('Live NWS weather data received:', data);
       
       setWeatherData({
-        temperature: data.temperature || 87,
-        heatIndex: data.heatIndex || 93,
-        humidity: data.humidity || 65,
-        location: data.location || 'Houston, TX',
-        timestamp: new Date().toISOString(),
-        alerts: data.alerts || [],
-        threatLevel: data.threatLevel || 'MODERATE',
-        conditions: data.conditions || 'Hot and Humid'
+        temperature: data.temperature,
+        heatIndex: data.heatIndex,
+        humidity: data.humidity,
+        location: data.location,
+        timestamp: data.timestamp,
+        alerts: data.alerts,
+        threatLevel: data.threatLevel,
+        conditions: data.conditions
       });
     } catch (error) {
-      console.error('Weather fetch error:', error);
-      // Set fallback data for demo
+      console.error('NWS weather service error:', error);
+      // Request user to check API configuration if live data fails
       setWeatherData({
-        temperature: 87,
-        heatIndex: 93,
-        humidity: 65,
-        location: 'Houston, TX',
+        temperature: 'ERR',
+        heatIndex: 'ERR',
+        humidity: 'ERR',
+        location: 'NWS Connection Error',
         timestamp: new Date().toISOString(),
         alerts: [],
-        threatLevel: 'MODERATE',
-        conditions: 'Hot and Humid'
+        threatLevel: 'WATCH',
+        conditions: 'API Connection Required'
       });
     }
   };
