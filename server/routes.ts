@@ -414,17 +414,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use ElevenLabs voice agent for AI-powered calling
           if (elevenlabsApiKey) {
             try {
-              // Make outbound call using ElevenLabs conversational agent
-              const agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversations', {
+              // Make outbound call using ElevenLabs conversational agent - CORRECTED ENDPOINT
+              const agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***/phone/outbound-call', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'xi-api-key': elevenlabsApiKey
+                  'Authorization': `Bearer ${elevenlabsApiKey}`
                 },
                 body: JSON.stringify({
-                  agent_id: '***REMOVED-AGENT-ID***',
-                  phone_number: targetPhone.startsWith('+') ? targetPhone : `+1${targetPhone.replace(/\D/g, '')}`,
-                  first_message: `Hello ${targetName}, this is the Sentinel AI Crisis Prevention System calling with an important climate health alert for your area. ${message.replace(/°F/g, 'degrees Fahrenheit')}`
+                  agent_phone_number_id: '***REMOVED-PHONE-ID***',
+                  to_number: targetPhone.startsWith('+') ? targetPhone : `+1${targetPhone.replace(/\D/g, '')}`,
+                  metadata: {
+                    caller_name: targetName,
+                    alert_type: 'heat_emergency',
+                    timestamp: new Date().toISOString()
+                  }
                 })
               });
 
@@ -686,6 +690,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     return voices[agentType] || voices.COMMANDER;
   }
+
+  // ElevenLabs Verification Endpoint
+  app.get('/api/verify-elevenlabs', async (req, res) => {
+    try {
+      const elevenlabsApiKey = process.env.ELEVENLABS_API_KEY;
+      
+      if (!elevenlabsApiKey) {
+        return res.status(500).json({ error: 'ElevenLabs API key missing' });
+      }
+
+      // Check agent exists
+      const agentResponse = await fetch(
+        'https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***',
+        {
+          headers: { 'Authorization': `Bearer ${elevenlabsApiKey}` }
+        }
+      );
+      
+      // Check phone numbers
+      const phoneResponse = await fetch(
+        'https://api.elevenlabs.io/v1/convai/phone/phone-numbers',
+        {
+          headers: { 'Authorization': `Bearer ${elevenlabsApiKey}` }
+        }
+      );
+      
+      const agentData = agentResponse.ok ? await agentResponse.json() : { error: await agentResponse.text() };
+      const phoneData = phoneResponse.ok ? await phoneResponse.json() : { error: await phoneResponse.text() };
+      
+      res.json({ 
+        agent: { status: agentResponse.status, data: agentData },
+        phones: { status: phoneResponse.status, data: phoneData }
+      });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Verification failed' });
+    }
+  });
 
   // Enhanced County Analysis Endpoint with Multi-County Support
   app.get("/api/county-analysis/:fips", async (req, res) => {
