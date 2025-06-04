@@ -19,6 +19,9 @@ interface KPIData {
     cardiology: { ratio: number; shortage: boolean };
     emergency: { ratio: number; shortage: boolean };
     psychiatry: { ratio: number; shortage: boolean };
+    primaryCare: { ratio: number; shortage: boolean };
+    pediatrics: { ratio: number; shortage: boolean };
+    obstetrics: { ratio: number; shortage: boolean };
     criticalShortages: number;
     totalActive: number;
     lastSync: string;
@@ -200,9 +203,9 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
             <div className="text-xs text-gray-500">Overall Coverage Ratio</div>
             <div className="mt-2 space-y-1">
               <div className="flex justify-between text-xs">
-                <span>Cardiology</span>
-                <span className={kpiData.providers.cardiology.shortage ? 'text-red-500' : 'text-green-500'}>
-                  {kpiData.providers.cardiology.ratio}%
+                <span>Primary Care</span>
+                <span className={kpiData.providers.primaryCare?.shortage ? 'text-red-500' : 'text-green-500'}>
+                  {kpiData.providers.primaryCare?.ratio || 0}%
                 </span>
               </div>
               <div className="flex justify-between text-xs">
@@ -215,6 +218,18 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
                 <span>Mental Health</span>
                 <span className={kpiData.providers.psychiatry.shortage ? 'text-red-500' : 'text-green-500'}>
                   {kpiData.providers.psychiatry.ratio}%
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Pediatrics</span>
+                <span className={kpiData.providers.pediatrics?.shortage ? 'text-red-500' : 'text-green-500'}>
+                  {kpiData.providers.pediatrics?.ratio || 0}%
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Maternal Care</span>
+                <span className={kpiData.providers.obstetrics?.shortage ? 'text-red-500' : 'text-green-500'}>
+                  {kpiData.providers.obstetrics?.ratio || 0}%
                 </span>
               </div>
             </div>
