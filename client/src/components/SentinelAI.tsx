@@ -679,14 +679,6 @@ const SentinelAI: React.FC = () => {
                 <div className="text-lg font-bold text-green-400">OPERATIONAL</div>
                 <div className="text-sm text-gray-400">All Systems</div>
               </div>
-              <motion.button 
-                onClick={handleEmergencyAlert}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Emergency Alert
-              </motion.button>
             </div>
           </div>
         </header>
