@@ -134,4 +134,4 @@ const healthcarePredictions = {
   }
 };
 
-module.exports = healthcarePredictions;
+export default healthcarePredictions;

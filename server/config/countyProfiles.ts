@@ -121,4 +121,3 @@ export const countyProfiles = {
   }
 };
 
-module.exports = countyProfiles;
