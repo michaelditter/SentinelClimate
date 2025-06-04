@@ -198,6 +198,7 @@ export default function WeatherSentinelMCP() {
   const [currentAgentPopup, setCurrentAgentPopup] = useState<string | null>(null);
   const [simulationStep, setSimulationStep] = useState(0);
   const [simulationTimer, setSimulationTimer] = useState(0);
+  const [agentProgress, setAgentProgress] = useState(0);
   const [agents, setAgents] = useState<AgentStatus[]>([
     {
       id: '1',
@@ -637,169 +638,25 @@ export default function WeatherSentinelMCP() {
   };
 
   const startEmergencySimulation = () => {
-    // Open emergency simulation in a new popup window
-    const popupWindow = window.open('', 'EmergencySimulation', 
-      'width=1200,height=800,scrollbars=no,resizable=yes,status=no,location=no,toolbar=no,menubar=no');
-    
-    if (popupWindow) {
-      popupWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Sentinel AI - Emergency Response Simulation</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            body { margin: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); font-family: system-ui, sans-serif; }
-          </style>
-        </head>
-        <body class="h-screen flex items-center justify-center p-8">
-          <div id="simulation-container" class="w-full max-w-4xl">
-            <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-12 border-2 border-green-500 shadow-2xl">
-              <div class="text-center">
-                <div class="text-8xl mb-6">🛡️</div>
-                <h1 class="text-5xl font-bold text-green-300 mb-4">SENTINEL AI</h1>
-                <h2 class="text-2xl text-gray-300 mb-8">Emergency Response Simulation</h2>
-                <div class="text-xl text-yellow-300 mb-6">Initializing multi-agent emergency response...</div>
-                <div class="w-full bg-gray-700 rounded-full h-3">
-                  <div class="bg-green-500 h-3 rounded-full animate-pulse" style="width: 25%" id="progress-bar"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <script>
-            const agents = [
-              {
-                name: 'SENTINEL',
-                icon: '🛡️',
-                color: 'green',
-                title: 'Environmental Detection & Analysis',
-                content: [
-                  '🔍 Real-time environmental analysis:',
-                  '• Temperature spike detected: 105°F',
-                  '• Heat Index calculated: 108°F EXTREME DANGER',
-                  '• Duration forecast: 6+ hours above 105°F',
-                  '• Population at risk: 800,000+ residents',
-                  '• Power grid strain: 94% capacity',
-                  '🚨 EMERGENCY THRESHOLD EXCEEDED',
-                  '✅ Triggering multi-agent response...'
-                ]
-              },
-              {
-                name: 'MEDIC',
-                icon: '🏥',
-                color: 'blue',
-                title: 'Healthcare Impact Assessment',
-                content: [
-                  '🧠 Healthcare impact analysis:',
-                  '• Processing historical data 2019-2023',
-                  '• Predicted ED surge: +287 visits (+45%)',
-                  '• Peak load window: 14:00-20:00 today',
-                  '• Vulnerable areas identified:',
-                  '  - Fifth Ward: 56% lack AC, 35K residents',
-                  '  - Third Ward: Elderly population, 28K residents',
-                  '  - East End: Outdoor workers, 42K residents',
-                  '• Specialty demand surge: Cardiology +60%',
-                  '✅ Healthcare analysis complete'
-                ]
-              },
-              {
-                name: 'DISPATCHER',
-                icon: '📞',
-                color: 'orange',
-                title: 'Resource Verification & Deployment',
-                content: [
-                  '📋 Resource verification & deployment:',
-                  '✓ Cooling Centers: 15 facilities available',
-                  '✓ Personnel: 47 staff confirmed ready',
-                  '✓ EMS Units: 23 ambulances available',
-                  '✓ Transport: 12 buses staged',
-                  '• Deployment sequence planned:',
-                  '  - Phase 1: 8 priority cooling centers',
-                  '  - Phase 2: 12 EMS units to vulnerable areas',
-                  '• Stakeholder notifications sent',
-                  '✅ All resources verified'
-                ]
-              },
-              {
-                name: 'COMMANDER',
-                icon: '🎯',
-                color: 'red',
-                title: 'Emergency Coordination Complete',
-                content: [
-                  '⚡ Emergency coordination complete:',
-                  '• Field commanders deployed to sectors',
-                  '• Operational monitoring established',
-                  '• Hospital capacity tracking active',
-                  '• 15-minute predictive deployment complete',
-                  '• 4.78M residents protected proactively',
-                  '',
-                  '📊 FINAL DEPLOYMENT SUMMARY:',
-                  '✅ 8 Cooling Centers opened    ✅ 12 EMS Units staged',
-                  '✅ 47 Personnel deployed       ✅ 15 minutes response time',
-                  '',
-                  '(vs 2+ hours traditional reactive response)'
-                ]
-              }
-            ];
-            
-            function showAgent(index) {
-              const agent = agents[index];
-              const borderColors = { green: 'border-green-500', blue: 'border-blue-500', orange: 'border-orange-500', red: 'border-red-500' };
-              const bgColors = { green: 'bg-green-500/20', blue: 'bg-blue-500/20', orange: 'bg-orange-500/20', red: 'bg-red-500/20' };
-              const textColors = { green: 'text-green-300', blue: 'text-blue-300', orange: 'text-orange-300', red: 'text-red-300' };
-              
-              document.getElementById('simulation-container').innerHTML = \`
-                <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-8 border-2 \${borderColors[agent.color]} shadow-2xl">
-                  <div class="flex items-center gap-6 mb-6">
-                    <div class="text-6xl w-24 h-24 flex items-center justify-center rounded-full \${bgColors[agent.color]}">
-                      \${agent.icon}
-                    </div>
-                    <div>
-                      <h2 class="text-3xl font-bold mb-2 \${textColors[agent.color]}">\${agent.name} AGENT</h2>
-                      <p class="text-lg text-gray-400">\${agent.title}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="bg-black/40 rounded-xl p-6 border-l-4 \${borderColors[agent.color]} font-mono text-sm leading-relaxed space-y-1">
-                    \${agent.content.map(line => \`<div>\${line}</div>\`).join('')}
-                  </div>
-                  
-                  <div class="mt-6">
-                    <div class="w-full bg-gray-700 rounded-full h-2">
-                      <div class="bg-\${agent.color}-500 h-2 rounded-full transition-all duration-1000" style="width: \${((index + 1) / 4) * 100}%"></div>
-                    </div>
-                    <div class="text-center mt-2 text-gray-400">Agent \${index + 1} of 4</div>
-                  </div>
-                  
-                  \${index === 3 ? \`
-                    <div class="text-center mt-6">
-                      <button onclick="window.close()" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-8 py-3 text-lg font-bold rounded-lg text-white transition-all duration-300 hover:scale-105">
-                        Complete Simulation
-                      </button>
-                    </div>
-                  \` : ''}
-                </div>
-              \`;
-            }
-            
-            // Start simulation sequence
-            setTimeout(() => showAgent(0), 2000);
-            setTimeout(() => showAgent(1), 6000);
-            setTimeout(() => showAgent(2), 10000);
-            setTimeout(() => showAgent(3), 14000);
-          </script>
-        </body>
-        </html>
-      `);
-      
-      popupWindow.document.close();
-      popupWindow.focus();
-    }
-    
     setIsEmergencySimulation(true);
+    setCurrentAgentPopup('SENTINEL');
+    setAgentProgress(1);
+    
+    // Auto-progress through agents
+    setTimeout(() => {
+      setCurrentAgentPopup('MEDIC');
+      setAgentProgress(2);
+    }, 4000);
+    
+    setTimeout(() => {
+      setCurrentAgentPopup('DISPATCHER');
+      setAgentProgress(3);
+    }, 8000);
+    
+    setTimeout(() => {
+      setCurrentAgentPopup('COMMANDER');
+      setAgentProgress(4);
+    }, 12000);
   };
 
   const resetSimulation = () => {
@@ -1337,10 +1194,10 @@ export default function WeatherSentinelMCP() {
           </div>
         )}
 
-        {/* Agent Popup Modals */}
+        {/* Emergency Simulation Full-Screen Overlay */}
         {currentAgentPopup && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[9999] flex items-center justify-end pr-8">
-            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-8 max-w-4xl w-full mr-8 shadow-2xl border-2 ${
+          <div className="fixed inset-0 bg-black/98 backdrop-blur-lg z-[10000] flex items-center justify-center p-8">
+            <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-10 max-w-6xl w-full shadow-2xl border-4 ${
               currentAgentPopup === 'SENTINEL' ? 'border-green-500' :
               currentAgentPopup === 'MEDIC' ? 'border-blue-500' :
               currentAgentPopup === 'DISPATCHER' ? 'border-orange-500' :
