@@ -26,7 +26,8 @@ import {
   Search,
   X,
   Download,
-  FileText
+  FileText,
+  TrendingUp as Temperature
 } from 'lucide-react';
 
 // Component imports
@@ -892,7 +893,7 @@ const SentinelAI: React.FC = () => {
                 {/* Weather Conditions */}
                 <div className="bg-gray-700 p-4 rounded-lg">
                   <h3 className="text-lg font-bold text-white mb-3 flex items-center">
-                    <Thermometer className="h-5 w-5 mr-2" />
+                    <Temperature className="h-5 w-5 mr-2" />
                     Weather Conditions
                   </h3>
                   <div className="space-y-2 text-sm">
