@@ -48,6 +48,9 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
   const [customPhoneNumbers, setCustomPhoneNumbers] = useState<{[key: string]: string}>({});
   const [customContactNames, setCustomContactNames] = useState<{[key: string]: string}>({});
   const [selectedAgentForContact, setSelectedAgentForContact] = useState<{[key: string]: string}>({});
+  const [customContactName, setCustomContactName] = useState('');
+  const [customContactPhone, setCustomContactPhone] = useState('');
+  const [callResult, setCallResult] = useState<any>(null);
 
   const scenarios: CrisisScenario[] = [
     {
@@ -163,6 +166,53 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
       setAgentAnalysis(authenticAnalysis);
     }
     setLoading(false);
+  };
+
+  const getScriptPreview = (agentType: string) => {
+    const scripts = {
+      'SENTINEL': 'Hello, this is the Sentinel AI Environmental Monitoring agent calling with an important climate health alert for your area. We are detecting dangerous heat conditions with elevated risk for heat-related health emergencies.',
+      'MEDIC': 'Hello, this is the Sentinel AI Medical Response agent calling with a health alert. Our system has identified elevated risk for heat-related health emergencies in your area requiring immediate attention and preparation.',
+      'DISPATCHER': 'Hello, this is the Sentinel AI Resource Coordination agent calling regarding emergency resource deployment. We need to coordinate cooling centers and transportation networks for vulnerable populations in your area.',
+      'COMMANDER': 'Hello, this is the Sentinel AI Strategic Command agent calling with a critical crisis authorization update. We have authorized extreme level crisis response for your jurisdiction requiring immediate executive action.'
+    };
+    return scripts[agentType as keyof typeof scripts] || scripts.COMMANDER;
+  };
+
+  const handleVoiceCall = async () => {
+    if (!customContactName || !customContactPhone || !selectedAgent) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setCallInProgress(true);
+    setCallResult(null);
+
+    try {
+      const response = await fetch('/api/emergency-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agentType: selectedAgent,
+          targetPhone: customContactPhone,
+          targetName: customContactName,
+          analysisData: agentAnalysis
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setCallResult(result);
+        console.log('Voice call initiated:', result);
+      } else {
+        alert('Failed to initiate voice call');
+      }
+    } catch (error) {
+      console.error('Error initiating voice call:', error);
+      alert('Error initiating voice call');
+    }
+    setCallInProgress(false);
   };
 
   const generateAuthenticAnalysis = (scenario: CrisisScenario) => {
@@ -290,10 +340,11 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="analysis">Agent Analysis</TabsTrigger>
           <TabsTrigger value="scenarios">Crisis Scenarios</TabsTrigger>
           <TabsTrigger value="outreach">Emergency Outreach</TabsTrigger>
+          <TabsTrigger value="voice-calling">Voice Calling</TabsTrigger>
           <TabsTrigger value="coordination">Multi-Agent Flow</TabsTrigger>
         </TabsList>
 
@@ -583,6 +634,115 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="voice-calling" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <PhoneCall className="h-5 w-5 mr-2" />
+                AI Voice Emergency Calling System
+              </CardTitle>
+              <p className="text-sm text-gray-600">Powered by ElevenLabs conversational AI agent</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Contact Name</label>
+                    <Input
+                      value={customContactName}
+                      onChange={(e) => setCustomContactName(e.target.value)}
+                      placeholder="Enter contact name"
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Phone Number</label>
+                    <Input
+                      value={customContactPhone}
+                      onChange={(e) => setCustomContactPhone(e.target.value)}
+                      placeholder="+1234567890"
+                      type="tel"
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">AI Agent Type</label>
+                    <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select AI agent" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.name}>
+                            {agent.name} - {agent.role}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">ElevenLabs Agent Details</h4>
+                    <div className="text-sm space-y-1">
+                      <div>Agent ID: ***REMOVED-AGENT-ID***</div>
+                      <div>Voice: Mark - Natural Conversations</div>
+                      <div>Max Duration: 10 minutes</div>
+                      <div>Capabilities: Crisis communication, Q&A, Resource guidance</div>
+                    </div>
+                  </div>
+                  
+                  {selectedAgent && (
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                      <h4 className="font-medium mb-2">Script Preview</h4>
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        {getScriptPreview(selectedAgent)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleVoiceCall}
+                  disabled={callInProgress || !customContactName || !customContactPhone || !selectedAgent}
+                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-3"
+                  size="lg"
+                >
+                  {callInProgress ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Initiating AI Voice Call...
+                    </>
+                  ) : (
+                    <>
+                      <PhoneCall className="h-4 w-4 mr-2" />
+                      Initiate AI Voice Call
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {callResult && (
+                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">Call Initiated Successfully</h4>
+                  <div className="text-sm text-green-700 dark:text-green-300 space-y-1">
+                    <div>Mode: {callResult.mode}</div>
+                    <div>Agent: {callResult.agentType}</div>
+                    <div>Target: {callResult.targetName} ({callResult.targetPhone})</div>
+                    {callResult.conversationId && <div>Conversation ID: {callResult.conversationId}</div>}
+                    {callResult.callSid && <div>Call SID: {callResult.callSid}</div>}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="coordination" className="space-y-4">
