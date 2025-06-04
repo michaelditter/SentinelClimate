@@ -44,7 +44,7 @@ import SocialListening from './SocialListening';
 import WeatherSentinelMCP from './WeatherSentinelMCP';
 
 // Data and hooks
-import { counties, resourceDeployments } from '@/data/geoData';
+import { resourceDeployments } from '@/data/geoData';
 import { agents } from '@/data/agentData';
 import { scenarios } from '@/data/scenarioData';
 import { useRealTimeData } from '@/hooks/useRealTimeData';
@@ -65,6 +65,7 @@ const SentinelAI: React.FC = () => {
   const [callTarget, setCallTarget] = useState({ name: '', phoneNumber: '' });
   const [selectedAgent, setSelectedAgent] = useState<'SENTINEL' | 'MEDIC' | 'DISPATCHER' | 'COMMANDER'>('COMMANDER');
   const [phoneNumber, setPhoneNumber] = useState('+15551234567');
+  const [liveCounties, setLiveCounties] = useState<County[]>([]);
   
   // Custom hooks
   const { data: realTimeData } = useRealTimeData(simulationRunning);
@@ -199,8 +200,8 @@ const SentinelAI: React.FC = () => {
   const handleGenerateReport = () => {
     const reportData = {
       timestamp: new Date().toISOString(),
-      criticalCounties: counties.filter(c => c.alertLevel === 'EXTREME').length,
-      totalPopulationAtRisk: counties.reduce((sum, c) => sum + c.vulnerablePopulation, 0),
+      criticalCounties: liveCounties.filter(c => c.alertLevel === 'EXTREME').length,
+      totalPopulationAtRisk: liveCounties.reduce((sum, c) => sum + c.vulnerablePopulation, 0),
       systemLoad: realTimeData?.powerGrid?.systemLoad || 0,
       recommendations: [
         'Deploy additional cooling centers in Harris County',
@@ -222,7 +223,7 @@ const SentinelAI: React.FC = () => {
 
   const handleDeployResources = () => {
     const resourceCount = Math.floor(Math.random() * 5) + 3;
-    const targetCounties = counties.filter(c => c.alertLevel === 'EXTREME' || c.alertLevel === 'HIGH');
+    const targetCounties = liveCounties.filter(c => c.alertLevel === 'EXTREME' || c.alertLevel === 'HIGH');
     
     const newActivity = {
       time: new Date().toLocaleTimeString(),
@@ -354,7 +355,7 @@ const SentinelAI: React.FC = () => {
           <div className="space-y-6">
             {/* Active Alerts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {counties.slice(0, 3).map((county) => (
+              {liveCounties.slice(0, 3).map((county) => (
                 <AlertCard key={county.id} county={county} />
               ))}
             </div>
