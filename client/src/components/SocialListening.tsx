@@ -206,21 +206,52 @@ const SocialListening: React.FC = () => {
     const section = sections.find(s => s.id === sectionId);
     if (!section) return;
 
-    setSections(prev => prev.map(s => 
-      s.id === sectionId ? { ...s, isRunning: true } : s
-    ));
+    try {
+      setSections(prev => prev.map(s => 
+        s.id === sectionId ? { ...s, isRunning: true } : s
+      ));
 
-    const searchPromises = section.queries.map(query => executeSearch(sectionId, query));
-    const results = await Promise.all(searchPromises);
+      const searchPromises = section.queries.map(query => executeSearch(sectionId, query));
+      const results = await Promise.all(searchPromises);
 
-    setSections(prev => prev.map(s => 
-      s.id === sectionId ? { 
-        ...s, 
-        isRunning: false, 
-        lastRun: new Date(),
-        results: results
-      } : s
-    ));
+      // Validate and sanitize results
+      const validResults = results.filter(result => result && typeof result === 'object').map(result => ({
+        id: result.id || `${sectionId}-${Date.now()}-${Math.random()}`,
+        query: result.query || '',
+        timestamp: result.timestamp || new Date().toISOString(),
+        results: Array.isArray(result.results) ? result.results.map(r => ({
+          id: r.id || `result-${Date.now()}`,
+          title: r.title || 'No title',
+          url: r.url || '#',
+          snippet: r.snippet || 'No description',
+          relevanceScore: typeof r.relevanceScore === 'number' ? r.relevanceScore : 0,
+          riskLevel: r.riskLevel || 'MODERATE',
+          source: r.source || 'Unknown',
+          timestamp: r.timestamp || new Date().toISOString()
+        })) : [],
+        alertLevel: result.alertLevel || 'NONE',
+        summary: result.summary || 'No analysis available'
+      }));
+
+      setSections(prev => prev.map(s => 
+        s.id === sectionId ? { 
+          ...s, 
+          isRunning: false, 
+          lastRun: new Date(),
+          results: validResults
+        } : s
+      ));
+    } catch (error) {
+      console.error('Section query error:', error);
+      setSections(prev => prev.map(s => 
+        s.id === sectionId ? { 
+          ...s, 
+          isRunning: false, 
+          lastRun: new Date(),
+          results: []
+        } : s
+      ));
+    }
   };
 
   const runAllSections = async () => {
