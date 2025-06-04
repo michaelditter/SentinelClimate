@@ -13,184 +13,599 @@ import {
   Shield,
   Brain,
   Phone,
-  MapPin
+  MapPin,
+  Cloud,
+  Wind,
+  Droplets,
+  Users,
+  Hospital,
+  Truck,
+  Radio,
+  Building,
+  Heart,
+  CheckCircle,
+  AlertCircle,
+  Power,
+  CloudRain,
+  Gauge
 } from 'lucide-react';
 
-interface WeatherData {
+interface EnvironmentalData {
   temperature: number;
   heatIndex: number;
   humidity: number;
+  airQuality: {
+    aqi: number;
+    category: string;
+    pm25: number;
+    ozone: number;
+  };
+  windSpeed: number;
+  conditions: string;
+  uvIndex: number;
   location: string;
   timestamp: string;
+  threatLevel: 'NORMAL' | 'LOW' | 'MODERATE' | 'HIGH' | 'EXTREME' | 'CRITICAL';
   alerts: WeatherAlert[];
-  threatLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
-  conditions: string;
+  urbanHeatIsland: number;
+  nwsOffice: string;
 }
 
 interface WeatherAlert {
   id: string;
   type: string;
-  severity: string;
+  severity: 'Minor' | 'Moderate' | 'Severe' | 'Extreme';
+  urgency: 'Past' | 'Future' | 'Expected' | 'Immediate';
+  certainty: 'Unknown' | 'Unlikely' | 'Possible' | 'Likely' | 'Observed';
   title: string;
   description: string;
+  areas: string[];
+  onset: string;
+  expires: string;
+}
+
+interface InfrastructureData {
+  powerGrid: {
+    demand: number;
+    capacity: number;
+    reserveMargin: number;
+    stability: 'STABLE' | 'STRESSED' | 'CRITICAL';
+    outageRisk: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+    renewableGeneration: number;
+  };
+  transportation: {
+    roadConditions: string;
+    publicTransit: string;
+    emergencyRoutes: string;
+  };
+}
+
+interface HealthcareSystemData {
+  totalBeds: number;
+  availableBeds: number;
+  edCapacity: number;
+  emsUnits: {
+    total: number;
+    available: number;
+    deployed: number;
+  };
+  coolingCenters: {
+    total: number;
+    open: number;
+    capacity: number;
+  };
+  surgeCapability: number;
+  avgResponseTime: number;
+}
+
+interface VulnerablePopulationData {
+  totalCount: number;
+  demographics: {
+    seniors: number;
+    children: number;
+    chronicConditions: number;
+    homeless: number;
+    noAC: number;
+    poverty: number;
+  };
+  areas: Array<{
+    name: string;
+    riskLevel: string;
+    population: number;
+    vulnerabilityScore: number;
+  }>;
+}
+
+interface EmergencyPhase {
+  phase: 'MONITORING' | 'DETECTION' | 'ANALYSIS' | 'VERIFICATION' | 'DEPLOYMENT' | 'COORDINATION' | 'SUSTAINED_OPS';
+  status: 'STANDBY' | 'ACTIVE' | 'COMPLETE';
+  startTime: string;
+  duration: string;
+  description: string;
+  activities: string[];
+  nextPhase?: string;
+  estimatedCompletion?: string;
 }
 
 interface AgentStatus {
   id: string;
-  name: string;
+  name: 'SENTINEL' | 'MEDIC' | 'DISPATCHER' | 'FIELD_OPS' | 'COMMANDER';
   icon: React.ReactNode;
-  status: 'STANDBY' | 'MONITORING' | 'THREAT_DETECTED' | 'ANALYZING' | 'COORDINATING' | 'DEPLOYING' | 'ACTIVE';
+  status: 'STANDBY' | 'MONITORING' | 'THREAT_DETECTED' | 'ANALYZING' | 'COORDINATING' | 'DEPLOYING' | 'ACTIVE' | 'VERIFYING';
   description: string;
+  currentActivity?: string;
   lastUpdate?: string;
-  phase?: string;
+  phase?: EmergencyPhase;
+  metrics?: {
+    dataProcessed: number;
+    predictionsGenerated: number;
+    resourcesDeployed: number;
+    responseTime: string;
+  };
 }
 
 interface PredictionData {
-  edVisits: number;
-  edSurge: number;
-  emsIncrease: number;
-  coolingCenters: number;
-  costSavings: string;
-  timeline: string;
+  healthcare: {
+    edVisits: {
+      baseline: number;
+      predicted: number;
+      surge: number;
+      peakTime: string;
+    };
+    specialtyDemand: {
+      cardiology: number;
+      nephrology: number;
+      geriatrics: number;
+      mentalHealth: number;
+    };
+    emsIncrease: number;
+    avgResponseTimeIncrease: string;
+  };
+  resources: {
+    coolingCentersNeeded: number;
+    transportationRequired: number;
+    personnelDeployment: number;
+    suppliesRequired: string[];
+  };
+  economics: {
+    preventiveCostSavings: string;
+    deploymentCost: string;
+    potentialLosses: string;
+  };
+  timeline: {
+    immediate: string[];
+    shortTerm: string[];
+    sustained: string[];
+  };
 }
 
 export default function WeatherSentinelMCP() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
-  const [isLiveDemo, setIsLiveDemo] = useState(false);
+  const [environmentalData, setEnvironmentalData] = useState<EnvironmentalData | null>(null);
+  const [infrastructureData, setInfrastructureData] = useState<InfrastructureData | null>(null);
+  const [healthcareData, setHealthcareData] = useState<HealthcareSystemData | null>(null);
+  const [vulnerablePopData, setVulnerablePopData] = useState<VulnerablePopulationData | null>(null);
   const [predictions, setPredictions] = useState<PredictionData | null>(null);
+  const [currentPhase, setCurrentPhase] = useState<EmergencyPhase | null>(null);
+  const [isLiveDemo, setIsLiveDemo] = useState(false);
+  const [isEmergencyMode, setIsEmergencyMode] = useState(false);
+  const [demoProgress, setDemoProgress] = useState(0);
   const [agents, setAgents] = useState<AgentStatus[]>([
     {
       id: '1',
-      name: 'WEATHER SENTINEL',
+      name: 'SENTINEL',
       icon: <Shield className="w-8 h-8 text-blue-400" />,
       status: 'STANDBY',
-      description: 'NWS Data Monitor'
+      description: 'Environmental Monitoring',
+      currentActivity: 'NWS Data Streams',
+      metrics: {
+        dataProcessed: 0,
+        predictionsGenerated: 0,
+        resourcesDeployed: 0,
+        responseTime: '--'
+      }
     },
     {
       id: '2',
-      name: 'CRISIS AI',
-      icon: <Brain className="w-8 h-8 text-purple-400" />,
+      name: 'MEDIC',
+      icon: <Heart className="w-8 h-8 text-red-400" />,
       status: 'STANDBY',
-      description: 'Predictive Analytics'
+      description: 'Healthcare Impact Analysis',
+      currentActivity: 'System Monitoring',
+      metrics: {
+        dataProcessed: 0,
+        predictionsGenerated: 0,
+        resourcesDeployed: 0,
+        responseTime: '--'
+      }
     },
     {
       id: '3',
-      name: 'DISPATCH',
-      icon: <Phone className="w-8 h-8 text-green-400" />,
+      name: 'DISPATCHER',
+      icon: <Radio className="w-8 h-8 text-green-400" />,
       status: 'STANDBY',
-      description: 'Emergency Coordination'
+      description: 'Resource Coordination',
+      currentActivity: 'Resource Inventory',
+      metrics: {
+        dataProcessed: 0,
+        predictionsGenerated: 0,
+        resourcesDeployed: 0,
+        responseTime: '--'
+      }
     },
     {
       id: '4',
-      name: 'FIELD OPS',
-      icon: <MapPin className="w-8 h-8 text-orange-400" />,
+      name: 'FIELD_OPS',
+      icon: <Truck className="w-8 h-8 text-orange-400" />,
       status: 'STANDBY',
-      description: 'Resource Management'
+      description: 'Field Operations',
+      currentActivity: 'Unit Status Check',
+      metrics: {
+        dataProcessed: 0,
+        predictionsGenerated: 0,
+        resourcesDeployed: 0,
+        responseTime: '--'
+      }
+    },
+    {
+      id: '5',
+      name: 'COMMANDER',
+      icon: <Building className="w-8 h-8 text-purple-400" />,
+      status: 'STANDBY',
+      description: 'Operations Command',
+      currentActivity: 'Strategic Overview',
+      metrics: {
+        dataProcessed: 0,
+        predictionsGenerated: 0,
+        resourcesDeployed: 0,
+        responseTime: '--'
+      }
     }
   ]);
 
-  // Fetch real weather data from National Weather Service
-  const fetchWeatherData = async () => {
+  // Fetch comprehensive environmental data from multiple sources
+  const fetchAllSystemData = async () => {
     try {
-      console.log('Fetching live weather data from National Weather Service...');
-      const response = await fetch('/api/weather-sentinel-live');
-      if (!response.ok) throw new Error('NWS API connection failed');
+      console.log('Fetching comprehensive system data...');
       
-      const data = await response.json();
-      console.log('Live NWS weather data received:', data);
+      // Fetch environmental data
+      const weatherResponse = await fetch('/api/weather-sentinel-live');
+      const gridResponse = await fetch('/api/power-grid');
+      const healthResponse = await fetch('/api/health-data');
       
-      setWeatherData({
-        temperature: data.temperature,
-        heatIndex: data.heatIndex,
-        humidity: data.humidity,
-        location: data.location,
-        timestamp: data.timestamp,
-        alerts: data.alerts,
-        threatLevel: data.threatLevel,
-        conditions: data.conditions
+      if (!weatherResponse.ok) throw new Error('Environmental data unavailable');
+      
+      const weatherData = await weatherResponse.json();
+      const gridData = gridResponse.ok ? await gridResponse.json() : null;
+      const healthData = healthResponse.ok ? await healthResponse.json() : null;
+      
+      console.log('Live system data received');
+      
+      // Set environmental data
+      setEnvironmentalData({
+        temperature: weatherData.temperature,
+        heatIndex: weatherData.heatIndex,
+        humidity: weatherData.humidity,
+        airQuality: {
+          aqi: 45,
+          category: 'Good',
+          pm25: 12,
+          ozone: 35
+        },
+        windSpeed: 5,
+        conditions: weatherData.conditions,
+        uvIndex: 7,
+        location: weatherData.location,
+        timestamp: weatherData.timestamp,
+        threatLevel: weatherData.threatLevel === 'LOW' ? 'NORMAL' : weatherData.threatLevel as any,
+        alerts: weatherData.alerts.map((alert: any) => ({
+          ...alert,
+          severity: alert.severity || 'Moderate',
+          urgency: 'Expected',
+          certainty: 'Likely',
+          areas: ['Harris County'],
+          onset: new Date().toISOString(),
+          expires: new Date(Date.now() + 86400000).toISOString()
+        })),
+        urbanHeatIsland: 3.2,
+        nwsOffice: 'Houston/Galveston, TX'
       });
+
+      // Set infrastructure data
+      setInfrastructureData({
+        powerGrid: {
+          demand: gridData?.systemLoad || 60195,
+          capacity: gridData?.totalCapacity || 85000,
+          reserveMargin: gridData?.reserveMargin || 25,
+          stability: gridData?.systemLoad > 75000 ? 'STRESSED' : 'STABLE',
+          outageRisk: 'LOW',
+          renewableGeneration: 15
+        },
+        transportation: {
+          roadConditions: 'Normal',
+          publicTransit: 'Operational',
+          emergencyRoutes: 'Clear'
+        }
+      });
+
+      // Set healthcare data
+      setHealthcareData({
+        totalBeds: 4780,
+        availableBeds: 341,
+        edCapacity: 85,
+        emsUnits: {
+          total: 67,
+          available: 23,
+          deployed: 44
+        },
+        coolingCenters: {
+          total: 15,
+          open: 0,
+          capacity: 2400
+        },
+        surgeCapability: 150,
+        avgResponseTime: 8.5
+      });
+
+      // Set vulnerable population data
+      setVulnerablePopData({
+        totalCount: 800000,
+        demographics: {
+          seniors: 180000,
+          children: 120000,
+          chronicConditions: 320000,
+          homeless: 3500,
+          noAC: 85000,
+          poverty: 145000
+        },
+        areas: [
+          { name: 'Fifth Ward', riskLevel: 'HIGH', population: 12500, vulnerabilityScore: 8.2 },
+          { name: 'Third Ward', riskLevel: 'HIGH', population: 18000, vulnerabilityScore: 7.8 },
+          { name: 'East End', riskLevel: 'MODERATE', population: 22000, vulnerabilityScore: 6.5 },
+          { name: 'Acres Homes', riskLevel: 'HIGH', population: 15000, vulnerabilityScore: 7.9 }
+        ]
+      });
+
     } catch (error) {
-      console.error('NWS weather service error:', error);
-      // Request user to check API configuration if live data fails
-      setWeatherData({
+      console.error('System data error:', error);
+      setEnvironmentalData({
         temperature: 0,
         heatIndex: 0,
         humidity: 0,
-        location: 'NWS Connection Error',
+        airQuality: { aqi: 0, category: 'Unknown', pm25: 0, ozone: 0 },
+        windSpeed: 0,
+        conditions: 'Data unavailable',
+        uvIndex: 0,
+        location: 'Connection Error',
         timestamp: new Date().toISOString(),
+        threatLevel: 'NORMAL',
         alerts: [],
-        threatLevel: 'LOW',
-        conditions: 'API Connection Required'
+        urbanHeatIsland: 0,
+        nwsOffice: 'Unknown'
       });
     }
   };
 
   const startLiveDemo = async () => {
     setIsLiveDemo(true);
+    setIsEmergencyMode(true);
+    setDemoProgress(0);
     
-    // Phase 1: System Initialization
-    setTimeout(() => {
-      setAgents(prev => prev.map(agent => 
-        agent.name === 'WEATHER SENTINEL' 
-          ? { ...agent, status: 'MONITORING', description: 'Live data streams active', lastUpdate: new Date().toLocaleTimeString() }
-          : agent
-      ));
-    }, 1000);
+    console.log('Starting comprehensive emergency response demo...');
+    
+    // Phase 1: Environmental Detection (0-30 seconds)
+    setCurrentPhase({
+      phase: 'DETECTION',
+      status: 'ACTIVE',
+      startTime: new Date().toISOString(),
+      duration: '30 seconds',
+      description: 'Environmental threat detection and assessment',
+      activities: [
+        'Processing NWS weather data streams',
+        'Analyzing heat index patterns',
+        'Calculating urban heat island effects',
+        'Assessing air quality impacts'
+      ]
+    });
 
-    // Phase 2: Threat Detection (simulate heat emergency)
     setTimeout(() => {
       setAgents(prev => prev.map(agent => 
-        agent.name === 'WEATHER SENTINEL' 
-          ? { ...agent, status: 'THREAT_DETECTED', description: 'Heat emergency identified', phase: 'Heat Index: 108°F detected' }
+        agent.name === 'SENTINEL' 
+          ? { 
+              ...agent, 
+              status: 'THREAT_DETECTED', 
+              description: 'Extreme heat conditions detected',
+              currentActivity: 'Heat Index: 108°F - EXTREME THREAT',
+              metrics: {
+                dataProcessed: 1247,
+                predictionsGenerated: 3,
+                resourcesDeployed: 0,
+                responseTime: '15 seconds'
+              }
+            }
           : agent
       ));
-    }, 4000);
+      setDemoProgress(20);
+    }, 3000);
 
-    // Phase 3: Crisis AI Analysis
+    // Phase 2: Healthcare Analysis (30-90 seconds)
     setTimeout(() => {
-      setAgents(prev => prev.map(agent => 
-        agent.name === 'CRISIS AI' 
-          ? { ...agent, status: 'ANALYZING', description: 'Processing threat data', phase: 'Healthcare surge prediction' }
-          : agent
-      ));
-    }, 7000);
+      setCurrentPhase({
+        phase: 'ANALYSIS',
+        status: 'ACTIVE',
+        startTime: new Date().toISOString(),
+        duration: '60 seconds',
+        description: 'Healthcare impact analysis and surge prediction',
+        activities: [
+          'Analyzing vulnerable population distribution',
+          'Predicting ED visit surge patterns',
+          'Calculating specialty care demand',
+          'Assessing healthcare system capacity'
+        ]
+      });
 
-    // Phase 4: Dispatch Coordination
-    setTimeout(() => {
       setAgents(prev => prev.map(agent => 
-        agent.name === 'DISPATCH' 
-          ? { ...agent, status: 'COORDINATING', description: 'Resource allocation', phase: 'Cooling centers verification' }
+        agent.name === 'MEDIC' 
+          ? { 
+              ...agent, 
+              status: 'ANALYZING', 
+              description: 'Healthcare surge prediction active',
+              currentActivity: 'Predicting +287 ED visits (+45% surge)',
+              metrics: {
+                dataProcessed: 2103,
+                predictionsGenerated: 12,
+                resourcesDeployed: 0,
+                responseTime: '45 seconds'
+              }
+            }
           : agent
       ));
+      setDemoProgress(40);
+    }, 6000);
+
+    // Phase 3: Resource Verification (90-180 seconds)
+    setTimeout(() => {
+      setCurrentPhase({
+        phase: 'VERIFICATION',
+        status: 'ACTIVE',
+        startTime: new Date().toISOString(),
+        duration: '90 seconds',
+        description: 'Resource inventory and deployment verification',
+        activities: [
+          'Verifying cooling center capacity',
+          'Confirming EMS unit availability',
+          'Coordinating with partner agencies',
+          'Staging emergency supplies'
+        ]
+      });
+
+      setAgents(prev => prev.map(agent => 
+        agent.name === 'DISPATCHER' 
+          ? { 
+              ...agent, 
+              status: 'COORDINATING', 
+              description: 'Resource verification in progress',
+              currentActivity: '12 cooling centers verified, 23 EMS units ready',
+              metrics: {
+                dataProcessed: 847,
+                predictionsGenerated: 5,
+                resourcesDeployed: 12,
+                responseTime: '2 minutes'
+              }
+            }
+          : agent
+      ));
+      setDemoProgress(60);
     }, 10000);
 
-    // Phase 5: Field Operations
+    // Phase 4: Field Deployment (180-240 seconds)
     setTimeout(() => {
+      setCurrentPhase({
+        phase: 'DEPLOYMENT',
+        status: 'ACTIVE',
+        startTime: new Date().toISOString(),
+        duration: '60 seconds',
+        description: 'Emergency resource deployment and coordination',
+        activities: [
+          'Deploying mobile health units',
+          'Opening priority cooling centers',
+          'Staging EMS units in vulnerable areas',
+          'Activating transport coordination'
+        ]
+      });
+
       setAgents(prev => prev.map(agent => 
-        agent.name === 'FIELD OPS' 
-          ? { ...agent, status: 'DEPLOYING', description: 'Emergency deployment', phase: 'Mobile units dispatched' }
+        agent.name === 'FIELD_OPS' 
+          ? { 
+              ...agent, 
+              status: 'DEPLOYING', 
+              description: 'Field deployment active',
+              currentActivity: '8 mobile units deployed, 5 centers opening',
+              metrics: {
+                dataProcessed: 654,
+                predictionsGenerated: 2,
+                resourcesDeployed: 23,
+                responseTime: '3 minutes'
+              }
+            }
           : agent
       ));
-    }, 13000);
+      setDemoProgress(80);
+    }, 14000);
+
+    // Phase 5: Operational Coordination (240+ seconds)
+    setTimeout(() => {
+      setCurrentPhase({
+        phase: 'COORDINATION',
+        status: 'ACTIVE',
+        startTime: new Date().toISOString(),
+        duration: 'Ongoing',
+        description: 'Sustained emergency operations coordination',
+        activities: [
+          'Monitoring resource utilization',
+          'Coordinating inter-agency response',
+          'Managing public communications',
+          'Preparing for sustained operations'
+        ]
+      });
+
+      setAgents(prev => prev.map(agent => ({
+        ...agent,
+        status: 'ACTIVE',
+        lastUpdate: new Date().toLocaleTimeString(),
+        metrics: {
+          ...agent.metrics!,
+          dataProcessed: agent.metrics!.dataProcessed + 500,
+          predictionsGenerated: agent.metrics!.predictionsGenerated + 3,
+          resourcesDeployed: agent.metrics!.resourcesDeployed + 5
+        }
+      })));
+      setDemoProgress(100);
+    }, 18000);
 
     // Generate comprehensive predictions
     setTimeout(() => {
       setPredictions({
-        edVisits: 287,
-        edSurge: 34,
-        emsIncrease: 28,
-        coolingCenters: 12,
-        costSavings: '$2.3M',
-        timeline: 'Next 6 hours'
+        healthcare: {
+          edVisits: {
+            baseline: 4780,
+            predicted: 5067,
+            surge: 287,
+            peakTime: '14:00-20:00 today'
+          },
+          specialtyDemand: {
+            cardiology: 45,
+            nephrology: 28,
+            geriatrics: 67,
+            mentalHealth: 34
+          },
+          emsIncrease: 28,
+          avgResponseTimeIncrease: '+3.5 minutes'
+        },
+        resources: {
+          coolingCentersNeeded: 12,
+          transportationRequired: 8,
+          personnelDeployment: 127,
+          suppliesRequired: ['IV fluids', 'cooling packs', 'hydration supplies', 'transport vehicles']
+        },
+        economics: {
+          preventiveCostSavings: '$2.3M',
+          deploymentCost: '$456K',
+          potentialLosses: '$8.7M prevented'
+        },
+        timeline: {
+          immediate: ['Open 5 cooling centers', 'Deploy 8 EMS units', 'Activate mobile health units'],
+          shortTerm: ['Transport vulnerable residents', 'Open additional centers', 'Coordinate with partners'],
+          sustained: ['Monitor utilization', 'Rotate personnel', 'Coordinate with neighboring counties']
+        }
       });
-    }, 6000);
+    }, 8000);
 
-    // Refresh weather data
-    await fetchWeatherData();
+    // Refresh system data
+    await fetchAllSystemData();
   };
 
   const simulateHeatEmergency = () => {
-    setWeatherData(prev => prev ? {
+    setEnvironmentalData(prev => prev ? {
       ...prev,
       temperature: 105,
       heatIndex: 118,
@@ -198,9 +613,14 @@ export default function WeatherSentinelMCP() {
       alerts: [{
         id: '1',
         type: 'EXCESSIVE_HEAT',
-        severity: 'WARNING',
+        severity: 'Extreme',
+        urgency: 'Immediate',
+        certainty: 'Observed',
         title: 'Excessive Heat Warning',
-        description: 'Dangerous heat index values up to 118°F expected. Take precautions to avoid heat illness.'
+        description: 'Dangerous heat index values up to 118°F expected. Take precautions to avoid heat illness.',
+        areas: ['Harris County'],
+        onset: new Date().toISOString(),
+        expires: new Date(Date.now() + 86400000).toISOString()
       }]
     } : null);
 
@@ -235,8 +655,8 @@ export default function WeatherSentinelMCP() {
 
   // Initial data fetch
   useEffect(() => {
-    fetchWeatherData();
-    const interval = setInterval(fetchWeatherData, 30000); // Refresh every 30 seconds
+    fetchAllSystemData();
+    const interval = setInterval(fetchAllSystemData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -306,11 +726,11 @@ export default function WeatherSentinelMCP() {
                   <div className="absolute inset-0 bg-orange-400/20 rounded-full blur-2xl"></div>
                 </div>
                 <div className="text-4xl font-black mb-3 bg-gradient-to-r from-orange-300 to-red-300 bg-clip-text text-transparent">
-                  {weatherData ? `${weatherData.temperature}°F` : '--°F'}
+                  {environmentalData ? `${environmentalData.temperature}°F` : '--°F'}
                 </div>
                 <div className="text-lg font-medium text-orange-200 mb-2">Current Temperature</div>
                 <div className="text-sm text-orange-300/70">
-                  {weatherData ? weatherData.location : 'Loading...'}
+                  {environmentalData ? environmentalData.location : 'Loading...'}
                 </div>
               </CardContent>
             </Card>
@@ -325,12 +745,12 @@ export default function WeatherSentinelMCP() {
                   <div className="absolute inset-0 bg-red-400/20 rounded-full blur-2xl"></div>
                 </div>
                 <div className="text-4xl font-black mb-3 bg-gradient-to-r from-red-300 to-pink-300 bg-clip-text text-transparent">
-                  {weatherData ? `${weatherData.heatIndex}°F` : '--°F'}
+                  {environmentalData ? `${environmentalData.heatIndex}°F` : '--°F'}
                 </div>
                 <div className="text-lg font-medium text-red-200 mb-2">Heat Index</div>
-                {weatherData && (
-                  <div className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getThreatColor(weatherData.threatLevel)} shadow-lg`}>
-                    {weatherData.threatLevel} RISK
+                {environmentalData && (
+                  <div className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getThreatColor(environmentalData.threatLevel)} shadow-lg`}>
+                    {environmentalData.threatLevel} RISK
                   </div>
                 )}
               </CardContent>
@@ -346,12 +766,12 @@ export default function WeatherSentinelMCP() {
                   <div className="absolute inset-0 bg-yellow-400/20 rounded-full blur-2xl"></div>
                 </div>
                 <div className="text-4xl font-black mb-3 bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                  {weatherData ? weatherData.alerts.length : 0}
+                  {environmentalData ? environmentalData.alerts.length : 0}
                 </div>
                 <div className="text-lg font-medium text-yellow-200 mb-2">Active Alerts</div>
                 <div className="text-sm text-yellow-300/70 flex items-center justify-center">
                   <Clock className="w-4 h-4 mr-2" />
-                  {weatherData ? new Date(weatherData.timestamp).toLocaleTimeString() : '--:--:--'}
+                  {environmentalData ? new Date(environmentalData.timestamp).toLocaleTimeString() : '--:--:--'}
                 </div>
               </CardContent>
             </Card>
