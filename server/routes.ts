@@ -409,6 +409,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if we have the required API keys for external services
       if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
         try {
+          console.log(`Initiating emergency call to ${targetPhone} from ${agentType} agent`);
+          
+          // Generate AI voice using ElevenLabs if available
+          let audioUrl = null;
+          if (elevenlabsApiKey) {
+            try {
+              const voiceResponse = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
+                method: 'POST',
+                headers: {
+                  'Accept': 'audio/mpeg',
+                  'Content-Type': 'application/json',
+                  'xi-api-key': elevenlabsApiKey
+                },
+                body: JSON.stringify({
+                  text: message,
+                  model_id: 'eleven_monolingual_v1',
+                  voice_settings: {
+                    stability: 0.5,
+                    similarity_boost: 0.5
+                  }
+                })
+              });
+
+              if (voiceResponse.ok) {
+                console.log('ElevenLabs voice generation successful');
+                // For real implementation, you would upload the audio and get a URL
+                // For now, we'll use Twilio's text-to-speech
+              }
+            } catch (voiceError) {
+              console.error('ElevenLabs API error:', voiceError);
+            }
+          }
+          
           // Create Twilio client and make call
           const twilioResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Calls.json`, {
             method: 'POST',
@@ -420,24 +453,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
               To: targetPhone,
               From: twilioPhoneNumber,
               Twiml: `<Response><Say voice="alice">${message}</Say></Response>`
-            })
+            }).toString()
           });
 
           if (twilioResponse.ok) {
             const callData = await twilioResponse.json();
+            console.log(`Twilio call initiated successfully: ${callData.sid}`);
             res.json({
               success: true,
               callSid: callData.sid,
-              message: 'Emergency call initiated successfully',
+              message: 'Real emergency call initiated successfully',
               agentType,
               targetPhone,
               targetName,
-              communicationScript: message
+              communicationScript: message,
+              mode: 'live'
             });
             return;
+          } else {
+            const errorData = await twilioResponse.text();
+            console.error('Twilio API error response:', errorData);
+            throw new Error(`Twilio API error: ${twilioResponse.status} - ${errorData}`);
           }
         } catch (twilioError) {
           console.error('Twilio API error:', twilioError);
+          // Fall through to demonstration mode
         }
       }
 
