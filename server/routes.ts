@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { countyProfiles } from "./config/countyProfiles";
 import healthcarePredictions from "./utils/healthcarePredictions";
+import { calculateResourceDeployment, getCountyProfile, generateDeploymentScenario } from "./utils/resourceDeployment";
 import OpenAI from 'openai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -3139,6 +3140,128 @@ If no results meet crisis relevance criteria, set isRelevant to false and filter
       res.json(fallbackResults);
     }
   });
+
+  // Rural vs Urban Resource Deployment API
+  app.get("/api/resource-deployment/:fips", async (req, res) => {
+    try {
+      const { fips } = req.params;
+      const county = getCountyProfile(fips);
+      
+      if (!county) {
+        return res.status(404).json({ error: 'County profile not found' });
+      }
+
+      // Get current weather and flood conditions
+      const coordinates = getCountyCoordinates(fips);
+      const weatherResponse = await fetch(
+        `https://api.weather.gov/points/${coordinates.lat},${coordinates.lon}`,
+        { headers: { 'User-Agent': 'SentinelAI/1.0 (emergency@sentinelai.gov)' }}
+      );
+
+      let weatherData = null;
+      if (weatherResponse.ok) {
+        const pointData = await weatherResponse.json();
+        const forecastResponse = await fetch(pointData.properties.forecast, {
+          headers: { 'User-Agent': 'SentinelAI/1.0 (emergency@sentinelai.gov)' }
+        });
+        if (forecastResponse.ok) {
+          weatherData = await forecastResponse.json();
+        }
+      }
+
+      // Check for active flood watches/warnings
+      const alertsResponse = await fetch(
+        `https://api.weather.gov/alerts/active?area=${fips.substring(0,2)}&urgency=Expected,Immediate`,
+        { headers: { 'User-Agent': 'SentinelAI/1.0 (emergency@sentinelai.gov)' }}
+      );
+
+      let floodData = null;
+      if (alertsResponse.ok) {
+        const alerts = await alertsResponse.json();
+        const floodAlerts = alerts.features?.filter((alert: any) => 
+          alert.properties.event?.toLowerCase().includes('flood')
+        );
+        if (floodAlerts?.length > 0) {
+          floodData = {
+            active: true,
+            level: floodAlerts[0].properties.severity?.toLowerCase() || 'moderate',
+            event: floodAlerts[0].properties.event
+          };
+        }
+      }
+
+      // Generate deployment scenario
+      const scenario = generateDeploymentScenario(county, {
+        heatIndex: weatherData?.properties?.periods?.[0]?.temperature || 85
+      }, floodData);
+
+      // Calculate appropriate resource deployment
+      const deployment = calculateResourceDeployment(county, scenario);
+
+      // Format response with rural-specific context
+      const response = {
+        county: {
+          name: getCountyNameByFips(fips),
+          fips,
+          population: county.population,
+          isRural: county.isRural,
+          area: county.area,
+          populationDensity: county.populationDensity,
+          hasFloodRisk: county.hasFloodRisk,
+          majorWaterways: county.majorWaterways
+        },
+        scenario: {
+          type: scenario.scenarioType,
+          severity: scenario.severity,
+          description: generateScenarioDescription(scenario, county, floodData),
+          duration: scenario.duration,
+          affectedPopulation: scenario.affectedPopulation,
+          vulnerablePopulation: scenario.vulnerablePopulation
+        },
+        deployment: {
+          mobileUnits: deployment.mobileUnits,
+          emergencyShelters: deployment.emergencyShelters,
+          medicalPersonnel: deployment.medicalPersonnel,
+          emergencyKits: deployment.emergencyKits,
+          specializedResources: deployment.specializedResources
+        },
+        context: {
+          ruralAdjustments: county.isRural ? [
+            'Resource counts scaled for rural population density',
+            'Strategic placement prioritized over quantity',
+            'Specialized rural equipment included'
+          ] : [
+            'Urban deployment parameters applied',
+            'Higher resource density for population centers'
+          ]
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      res.json(response);
+
+    } catch (error) {
+      console.error('Resource deployment calculation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to calculate resource deployment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  function generateScenarioDescription(scenario: any, county: any, floodData: any): string {
+    if (scenario.scenarioType === 'flood' && county.isRural) {
+      return `Rural flooding scenario affecting ${county.majorWaterways.join(', ')} basin. ` +
+             `Limited infrastructure requires specialized rural response protocols with ` +
+             `emphasis on isolated community access and livestock protection.`;
+    } else if (scenario.scenarioType === 'combined') {
+      return `Combined heat and flood emergency in ${county.isRural ? 'rural' : 'urban'} area. ` +
+             `Compound risks require coordinated multi-hazard response.`;
+    } else {
+      return `Heat emergency affecting ${county.isRural ? 'rural' : 'urban'} population. ` +
+             `Resource deployment scaled for ${county.populationDensity} people per square mile.`;
+    }
+  }
 
   // ============================================================================
   // HOSPITAL MCP INTEGRATION ENDPOINTS - POST-HACKATHON IMPLEMENTATION

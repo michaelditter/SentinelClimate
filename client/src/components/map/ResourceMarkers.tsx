@@ -27,42 +27,116 @@ const ResourceMarkers: React.FC<ResourceMarkersProps> = ({ deployments }) => {
     }
   };
 
+  const [deployment, setDeployment] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDeploymentData();
+  }, []);
+
+  const fetchDeploymentData = async () => {
+    try {
+      // Default to Harris County for demonstration
+      const response = await fetch('/api/resource-deployment/48201');
+      if (response.ok) {
+        const data = await response.json();
+        setDeployment(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch deployment data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h4 className="font-bold text-lg mb-4">Resource Deployment</h4>
+        <div className="text-gray-400">Loading deployment data...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
       <h4 className="font-bold text-lg mb-4">Resource Deployment</h4>
-      <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Truck className="h-4 w-4 text-blue-400" />
-            <span className="text-sm">Mobile Units</span>
+      {deployment && (
+        <>
+          <div className="mb-3 text-xs text-gray-400">
+            {deployment.county.name} - {deployment.county.isRural ? 'Rural' : 'Urban'} Response
           </div>
-          <span className="font-bold text-blue-400">47 active</span>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Building className="h-4 w-4 text-green-400" />
-            <span className="text-sm">Cooling Centers</span>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Truck className="h-4 w-4 text-blue-400" />
+                <span className="text-sm">Mobile Units</span>
+              </div>
+              <span className="font-bold text-blue-400">{deployment.deployment.mobileUnits} active</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Building className="h-4 w-4 text-green-400" />
+                <span className="text-sm">Emergency Shelters</span>
+              </div>
+              <span className="font-bold text-green-400">{deployment.deployment.emergencyShelters} open</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Users className="h-4 w-4 text-purple-400" />
+                <span className="text-sm">Medical Personnel</span>
+              </div>
+              <span className="font-bold text-purple-400">{deployment.deployment.medicalPersonnel} deployed</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <Package className="h-4 w-4 text-orange-400" />
+                <span className="text-sm">Emergency Kits</span>
+              </div>
+              <span className="font-bold text-orange-400">{(deployment.deployment.emergencyKits / 1000).toFixed(1)}K distributed</span>
+            </div>
+            
+            {/* Specialized Resources for Rural Areas */}
+            {deployment.deployment.specializedResources && Object.keys(deployment.deployment.specializedResources).length > 0 && (
+              <div className="mt-4 pt-3 border-t border-gray-700">
+                <div className="text-xs text-gray-400 mb-2">Specialized Resources</div>
+                <div className="space-y-2 text-xs">
+                  {deployment.deployment.specializedResources.highWaterRescue && (
+                    <div className="flex justify-between">
+                      <span>High Water Rescue Units:</span>
+                      <span className="text-yellow-400">{deployment.deployment.specializedResources.highWaterRescue}</span>
+                    </div>
+                  )}
+                  {deployment.deployment.specializedResources.helicopterUnits && (
+                    <div className="flex justify-between">
+                      <span>Helicopter Units:</span>
+                      <span className="text-yellow-400">{deployment.deployment.specializedResources.helicopterUnits}</span>
+                    </div>
+                  )}
+                  {deployment.deployment.specializedResources.boatUnits && (
+                    <div className="flex justify-between">
+                      <span>Boat Units:</span>
+                      <span className="text-yellow-400">{deployment.deployment.specializedResources.boatUnits}</span>
+                    </div>
+                  )}
+                  {deployment.deployment.specializedResources.communicationUnits && (
+                    <div className="flex justify-between">
+                      <span>Communication Units:</span>
+                      <span className="text-yellow-400">{deployment.deployment.specializedResources.communicationUnits}</span>
+                    </div>
+                  )}
+                  {deployment.deployment.specializedResources.livestockSupport && (
+                    <div className="text-yellow-400">✓ Livestock evacuation support</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          <span className="font-bold text-green-400">23 open</span>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Users className="h-4 w-4 text-purple-400" />
-            <span className="text-sm">Medical Teams</span>
-          </div>
-          <span className="font-bold text-purple-400">15 deployed</span>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Package className="h-4 w-4 text-orange-400" />
-            <span className="text-sm">Emergency Kits</span>
-          </div>
-          <span className="font-bold text-orange-400">2.1K distributed</span>
-        </div>
-      </div>
+        </>
+      )}
       
       {/* Recent Deployments */}
       <div className="mt-6">
