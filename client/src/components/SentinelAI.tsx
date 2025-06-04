@@ -22,7 +22,8 @@ import {
   Flame,
   Banknote,
   Phone,
-  MessageSquare
+  MessageSquare,
+  Search
 } from 'lucide-react';
 
 // Component imports
@@ -558,8 +559,9 @@ const SentinelAI: React.FC = () => {
     { key: 'risk-assessment', icon: Map, label: 'Risk Assessment', emoji: '🗺️' },
     { key: 'agent-coordination', icon: Bot, label: 'Agent Coordination', emoji: '🤖' },
     { key: 'crisis-simulation', icon: Flame, label: 'Crisis Simulation', emoji: '⚡' },
-    { key: 'trigger-outreach', icon: Phone, label: 'Trigger Outreach', emoji: '📞' },
-    { key: 'county-analysis', icon: Building, label: 'County Deep Dive', emoji: '🏙️' }
+    { key: 'county-analysis', icon: Building, label: 'County Deep Dive', emoji: '🏙️' },
+    { key: 'social-listening', icon: Search, label: 'Social Listening', emoji: '👂' },
+    { key: 'trigger-outreach', icon: Phone, label: 'Trigger Outreach', emoji: '📞' }
   ];
 
   const viewTitles: Record<ViewType, { title: string; subtitle: string }> = {
