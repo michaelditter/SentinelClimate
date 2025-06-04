@@ -833,7 +833,7 @@ export default function WeatherSentinelMCP() {
             <div className="text-center max-w-3xl mx-4">
               <div className="bg-gradient-to-r from-green-900/40 to-blue-900/40 border border-green-500/30 rounded-2xl p-6 mb-6">
                 <h3 className="text-xl font-bold text-green-300 mb-3">🌤️ Normal Operations Mode, Monitor Flood</h3>
-                <p className="text-lg text-gray-300 mb-3">Current conditions: Within Normal Parameters - No emergency protocols required</p>
+                <p className="text-lg text-gray-300 mb-3">Current conditions: Within Normal Parameters - Monitor Flood Alert for Resource Needs</p>
                 <p className="text-sm text-gray-400 mb-5 leading-relaxed">
                   With current normal conditions, no AI analysis or emergency resource deployment is needed. 
                   Sentinel AI continuously monitors 4.78 million Harris County residents through predictive monitoring.
