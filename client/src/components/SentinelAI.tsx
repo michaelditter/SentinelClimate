@@ -268,7 +268,13 @@ const SentinelAI: React.FC = () => {
           threatLevel: weatherData.threatLevel || 'MODERATE',
           countiesMonitored: liveCounties.length,
           criticalCounties: liveCounties.filter(c => c.alertLevel === 'EXTREME' || c.alertLevel === 'HIGH').length,
-          totalPopulationAtRisk: liveCounties.reduce((sum, c) => sum + (c.vulnerablePopulation || 15000), 0),
+          totalPopulationAtRisk: liveCounties.reduce((sum, c) => {
+            // Use actual vulnerable population data for Harris County specifically
+            if (c.id === 'harris-tx') {
+              return sum + (c.vulnerablePopulation || 125000); // Harris County realistic estimate
+            }
+            return sum + (c.vulnerablePopulation || 8000); // Other counties smaller estimate
+          }, 0),
           keyThreat: `Heat Index ${weatherData.heatIndex}°F in primary monitoring zones`
         },
         weather_conditions: {
@@ -309,8 +315,8 @@ const SentinelAI: React.FC = () => {
         },
         recommendations: [
           `Monitor ${weatherData.location} heat conditions - current ${weatherData.temperature}°F`,
-          `Healthcare utilization at ${kpiData.healthcare?.capacityUtilization || 'unknown'}% - prepare surge protocols`,
-          `Grid reserve margin: ${kpiData.grid?.reserveMargin || 'monitoring'} MW - assess stability`,
+          `FLOOD ALERT: Potential flooding conditions - deploy additional medical resources for affected areas`,
+          `Grid reserve margin: ${kpiData.grid?.reserveMargin || 'monitoring'} MW - monitor for changes`,
           `Air quality AQI ${kpiData.airQuality?.aqi || 'monitoring'} - advise vulnerable populations`,
           `Provider shortages: ${kpiData.providers?.criticalShortages || 0} critical areas identified`
         ],
