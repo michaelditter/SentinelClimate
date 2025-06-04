@@ -344,8 +344,8 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
           <TabsTrigger value="analysis">Agent Analysis</TabsTrigger>
           <TabsTrigger value="scenarios">Crisis Scenarios</TabsTrigger>
           <TabsTrigger value="outreach">Emergency Outreach</TabsTrigger>
-          <TabsTrigger value="voice-calling">Voice Calling</TabsTrigger>
           <TabsTrigger value="coordination">Multi-Agent Flow</TabsTrigger>
+          <TabsTrigger value="voice-calling">Voice Calling</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analysis" className="space-y-4">
