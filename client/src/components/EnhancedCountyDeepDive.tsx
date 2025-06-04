@@ -611,19 +611,57 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
                   <div className="space-y-4">
                     <div>
                       <h4 className="font-medium mb-2">Key Topics Trending</h4>
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         {socialData.keyTopics?.map((topic: any, index: number) => (
-                          <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <div className="font-medium">{topic.topic}</div>
-                              <div className="text-sm text-gray-600">{topic.summary}</div>
+                          <div key={index} className="border rounded-lg p-4 bg-white">
+                            <div className="flex justify-between items-center mb-3">
+                              <div>
+                                <div className="font-medium">{topic.topic}</div>
+                                <div className="text-sm text-gray-600">{topic.summary}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium">{topic.mentions} mentions</div>
+                                <Badge variant={topic.urgency === 'High' ? 'destructive' : 'secondary'}>
+                                  {topic.urgency}
+                                </Badge>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <div className="text-sm font-medium">{topic.mentions} mentions</div>
-                              <Badge variant={topic.urgency === 'High' ? 'destructive' : 'secondary'}>
-                                {topic.urgency}
-                              </Badge>
-                            </div>
+                            
+                            {topic.samplePosts && (
+                              <div className="mt-3 space-y-2">
+                                <div className="text-sm font-medium text-gray-700">Sample Posts:</div>
+                                {topic.samplePosts.map((post: any) => (
+                                  <div 
+                                    key={post.id} 
+                                    className="border-l-4 border-blue-200 pl-3 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                                    onClick={() => window.alert(`Post Details:\n\nPlatform: ${post.platform}\nSource: ${post.source}\nTimestamp: ${post.timestamp}\nEngagement: ${post.engagement} interactions\nVerified: ${post.verified ? 'Yes' : 'No'}\n\nContent: "${post.content}"\n\nNote: This is simulated social media data for demonstration purposes.`)}
+                                  >
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <div className="text-sm text-gray-800 mb-1">"{post.content}"</div>
+                                        <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                          <span className="font-medium">{post.platform}</span>
+                                          <span>•</span>
+                                          <span>{post.source}</span>
+                                          {post.verified && (
+                                            <>
+                                              <span>•</span>
+                                              <CheckCircle className="h-3 w-3 text-blue-500" />
+                                              <span>Verified</span>
+                                            </>
+                                          )}
+                                          <span>•</span>
+                                          <span>{post.timestamp}</span>
+                                        </div>
+                                      </div>
+                                      <div className="ml-3 text-xs text-gray-500">
+                                        {post.engagement} interactions
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -652,6 +690,56 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
                         ))}
                       </div>
                     </div>
+
+                    {socialData.dataSourceMetadata && (
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium mb-3">Data Sources & Methodology</h4>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Analysis Method</div>
+                              <div className="text-sm text-gray-600">{socialData.dataSourceMetadata.methodology}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Confidence Level</div>
+                              <div className="text-sm text-gray-600">{socialData.dataSourceMetadata.confidenceLevel}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Analysis Window</div>
+                              <div className="text-sm text-gray-600">{socialData.dataSourceMetadata.analysisWindow}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-700">Update Frequency</div>
+                              <div className="text-sm text-gray-600">{socialData.dataSourceMetadata.updateFrequency}</div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-sm font-medium text-gray-700 mb-2">Platform Coverage</div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {Object.entries(socialData.dataSourceMetadata.platforms || {}).map(([platform, details]: [string, any]) => (
+                                <div key={platform} className="p-2 bg-gray-50 rounded text-xs">
+                                  <div className="font-medium">{platform}</div>
+                                  <div className="text-gray-600">{details.coverage}</div>
+                                  <div className="text-gray-500">{details.apiAccess}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {socialData.dataSourceMetadata.disclaimers && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                              <div className="text-sm font-medium text-yellow-800 mb-1">Important Notes:</div>
+                              <div className="space-y-1">
+                                {socialData.dataSourceMetadata.disclaimers.map((disclaimer: string, index: number) => (
+                                  <div key={index} className="text-xs text-yellow-700">• {disclaimer}</div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

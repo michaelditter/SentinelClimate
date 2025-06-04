@@ -1449,21 +1449,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
             mentions: 847,
             sentiment: 'Negative',
             urgency: 'High',
-            summary: 'Residents expressing worry about grid stability during peak heat'
+            summary: 'Residents expressing worry about grid stability during peak heat',
+            samplePosts: [
+              {
+                id: 'tw_001',
+                platform: 'Twitter/X',
+                content: 'Another rolling blackout warning from @CenterPointEnergy. When will they fix the grid? #HoustonHeat #PowerOutage',
+                engagement: 124,
+                source: '@houstonresident94',
+                timestamp: '2 hours ago',
+                verified: false
+              },
+              {
+                id: 'fb_002',
+                platform: 'Facebook',
+                content: 'Harris County Emergency Management posted about potential grid stress during peak hours tomorrow. Please conserve energy!',
+                engagement: 89,
+                source: 'Harris County Community Group',
+                timestamp: '4 hours ago',
+                verified: true
+              }
+            ]
           },
           {
             topic: 'Cooling Center Availability',
             mentions: 523,
             sentiment: 'Mixed',
             urgency: 'Medium',
-            summary: 'Information seeking about cooling center locations and hours'
+            summary: 'Information seeking about cooling center locations and hours',
+            samplePosts: [
+              {
+                id: 'nd_003',
+                platform: 'Nextdoor',
+                content: 'Does anyone know if the community center on Main St is still open as a cooling center? My AC broke and need somewhere cool.',
+                engagement: 67,
+                source: 'Local Neighbor',
+                timestamp: '1 hour ago',
+                verified: false
+              },
+              {
+                id: 'rd_004',
+                platform: 'Reddit',
+                content: 'PSA: List of all cooling centers in Houston area with current hours and capacity. Stay safe everyone!',
+                engagement: 201,
+                source: 'r/houston moderator',
+                timestamp: '3 hours ago',
+                verified: true
+              }
+            ]
           },
           {
             topic: 'Healthcare Access',
             mentions: 312,
             sentiment: 'Concerned',
             urgency: 'High',
-            summary: 'Discussions about emergency room wait times and provider availability'
+            summary: 'Discussions about emergency room wait times and provider availability',
+            samplePosts: [
+              {
+                id: 'tw_005',
+                platform: 'Twitter/X',
+                content: '6 hour wait at Methodist ER. Heat exhaustion cases overwhelming the system. Stay hydrated folks! #HoustonHealth',
+                engagement: 156,
+                source: '@healthcareworker_htx',
+                timestamp: '30 minutes ago',
+                verified: true
+              },
+              {
+                id: 'fb_006',
+                platform: 'Facebook',
+                content: 'Texas Medical Center urging people to seek preventive care and avoid ER unless truly necessary during this heat wave.',
+                engagement: 78,
+                source: 'Texas Medical Center Official',
+                timestamp: '2 hours ago',
+                verified: true
+              }
+            ]
           }
         ],
         emergingConcerns: [
@@ -1483,7 +1543,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Increase public communication about cooling centers',
           'Monitor social channels for emergency situations',
           'Prepare additional healthcare resources'
-        ]
+        ],
+        dataSourceMetadata: {
+          methodology: 'AI-powered sentiment analysis and topic modeling',
+          platforms: {
+            'Twitter/X': {
+              coverage: '45% of total mentions',
+              apiAccess: 'Real-time streaming API',
+              verificationLevel: 'Account verification checked'
+            },
+            'Facebook': {
+              coverage: '25% of total mentions',
+              apiAccess: 'Public posts via Graph API',
+              verificationLevel: 'Page verification checked'
+            },
+            'Reddit': {
+              coverage: '15% of total mentions',
+              apiAccess: 'PRAW (Python Reddit API)',
+              verificationLevel: 'Moderator status verified'
+            },
+            'Nextdoor': {
+              coverage: '10% of total mentions',
+              apiAccess: 'Public neighborhood posts',
+              verificationLevel: 'Address verification'
+            },
+            'Local News': {
+              coverage: '5% of total mentions',
+              apiAccess: 'RSS feeds and web scraping',
+              verificationLevel: 'Media outlet credibility scores'
+            }
+          },
+          analysisWindow: '24-hour rolling window',
+          updateFrequency: 'Every 15 minutes',
+          confidenceLevel: '87%',
+          disclaimers: [
+            'This is simulated social media intelligence for demonstration purposes',
+            'Real implementation would require appropriate API keys and permissions',
+            'Data privacy and terms of service compliance required for production use'
+          ]
+        }
       };
       
       res.json(socialIntelligence);
