@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Phone, Brain, AlertTriangle, Target, Eye, MessageSquare, Play, PhoneCall, Volume2, Users } from 'lucide-react';
+import { Phone, Brain, AlertTriangle, Target, Eye, MessageSquare, Play, PhoneCall, Volume2, Users, CheckCircle } from 'lucide-react';
 
 interface TriggerOutreachProps {
   selectedCounty?: any;
