@@ -1046,10 +1046,10 @@ export default function WeatherSentinelMCP() {
                   <div className="w-full bg-gray-700 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-red-500 to-orange-500 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${(demoStep / 6) * 100}%` }}
+                      style={{ width: `${(demoStep / 5) * 100}%` }}
                     ></div>
                   </div>
-                  <div className="text-sm text-gray-400 mt-2">Step {demoStep} of 6</div>
+                  <div className="text-sm text-gray-400 mt-2">Step {demoStep} of 5</div>
                 </div>
               </div>
             </div>
