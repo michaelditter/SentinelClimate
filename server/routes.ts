@@ -3140,6 +3140,166 @@ If no results meet crisis relevance criteria, set isRelevant to false and filter
     }
   });
 
+  // ============================================================================
+  // HOSPITAL MCP INTEGRATION ENDPOINTS - POST-HACKATHON IMPLEMENTATION
+  // ============================================================================
+  
+  // Import hospital MCP server for post-hackathon integration
+  // Note: These endpoints are designed for future hospital system integration
+  // and are not currently active in the demonstration version.
+  
+  // Hospital MCP Server endpoint for protocol communication
+  app.post("/api/hospital-mcp", async (req, res) => {
+    try {
+      // This endpoint would handle MCP requests from hospital information systems
+      // Implementation note: Requires hospital system authentication and HIPAA compliance
+      
+      res.status(501).json({
+        error: "Hospital MCP integration not yet implemented",
+        note: "This endpoint is designed for post-hackathon hospital system integration",
+        contact: "Contact development team for hospital integration partnerships"
+      });
+    } catch (error) {
+      console.error('Hospital MCP error:', error);
+      res.status(500).json({ error: 'Hospital MCP service error' });
+    }
+  });
+
+  // Hospital capacity monitoring endpoint
+  app.get("/api/hospital-capacity", async (req, res) => {
+    try {
+      const { facility_ids, region = "harris_county", include_surge = true } = req.query;
+      
+      // This would connect to real hospital capacity management systems
+      // Implementation note: Requires HL7 FHIR compliance and secure authentication
+      
+      res.status(501).json({
+        error: "Hospital capacity integration not yet implemented",
+        note: "This endpoint is designed for real-time hospital capacity monitoring",
+        target_hospitals: [
+          "Harris Health LBJ Hospital (326 beds, Level 1 Trauma)",
+          "Ben Taub Hospital (624 beds, Level 1 Trauma)",
+          "Houston Methodist Hospital (907 beds, Cardiac specialty)",
+          "Memorial Hermann TMC (750 beds, Level 1 Trauma)",
+          "Texas Children's Hospital (639 beds, Pediatric specialty)"
+        ],
+        contact: "Contact development team for hospital integration partnerships"
+      });
+    } catch (error) {
+      console.error('Hospital capacity error:', error);
+      res.status(500).json({ error: 'Hospital capacity service error' });
+    }
+  });
+
+  // Emergency department status endpoint
+  app.get("/api/ed-status", async (req, res) => {
+    try {
+      const { facility_ids, severity_levels } = req.query;
+      
+      // This would connect to emergency department management systems
+      // Implementation note: Requires real-time ED data feeds and authentication
+      
+      res.status(501).json({
+        error: "ED status integration not yet implemented",
+        note: "This endpoint is designed for real-time emergency department monitoring",
+        features: [
+          "Real-time wait times by ESI (Emergency Severity Index)",
+          "Patient volumes and heat-related case tracking",
+          "Divert status monitoring",
+          "Capacity alerts and surge notifications"
+        ],
+        contact: "Contact development team for hospital integration partnerships"
+      });
+    } catch (error) {
+      console.error('ED status error:', error);
+      res.status(500).json({ error: 'ED status service error' });
+    }
+  });
+
+  // Heat protocol activation endpoint
+  app.post("/api/activate-heat-protocols", async (req, res) => {
+    try {
+      const { facility_ids, protocol_level, expected_surge } = req.body;
+      
+      // This would send protocol activation commands to hospital systems
+      // Implementation note: Requires secure command channels and authorization
+      
+      res.status(501).json({
+        error: "Heat protocol activation not yet implemented",
+        note: "This endpoint is designed for emergency protocol coordination",
+        protocol_levels: ["advisory", "warning", "emergency"],
+        actions: [
+          "ED surge capacity activation",
+          "Additional cooling stations",
+          "Heat illness protocol teams",
+          "Pharmacy medication stock verification",
+          "Transport team readiness"
+        ],
+        contact: "Contact development team for hospital integration partnerships"
+      });
+    } catch (error) {
+      console.error('Heat protocol activation error:', error);
+      res.status(500).json({ error: 'Heat protocol service error' });
+    }
+  });
+
+  // Medical specialist availability endpoint
+  app.get("/api/specialty-availability", async (req, res) => {
+    try {
+      const { specialties, region = "harris_county", availability_window = "24_hours" } = req.query;
+      
+      // This would query specialist scheduling and availability systems
+      // Implementation note: Requires integration with physician scheduling systems
+      
+      res.status(501).json({
+        error: "Specialty availability integration not yet implemented",
+        note: "This endpoint is designed for medical specialist availability tracking",
+        target_specialties: [
+          "Cardiology (heat-related cardiac events)",
+          "Nephrology (kidney function complications)",
+          "Emergency Medicine (heat illness management)",
+          "Internal Medicine (general heat complications)",
+          "Pediatrics (vulnerable population care)"
+        ],
+        contact: "Contact development team for hospital integration partnerships"
+      });
+    } catch (error) {
+      console.error('Specialty availability error:', error);
+      res.status(500).json({ error: 'Specialty availability service error' });
+    }
+  });
+
+  // Hospital integration status endpoint
+  app.get("/api/hospital-integration-status", async (req, res) => {
+    try {
+      res.json({
+        status: "development",
+        version: "1.0.0-dev",
+        note: "Hospital MCP integration is designed for post-hackathon implementation",
+        implementation_timeline: {
+          phase_1: "MCP protocol setup and authentication",
+          phase_2: "Hospital system integration and real-time data feeds",
+          phase_3: "Production deployment with HIPAA compliance"
+        },
+        target_integrations: {
+          "Harris Health System": "LBJ Hospital, Ben Taub Hospital",
+          "Houston Methodist": "Main campus and satellite locations",
+          "Memorial Hermann": "TMC and regional facilities",
+          "Texas Children's": "Main campus and urgent care centers"
+        },
+        technical_requirements: {
+          protocols: ["HL7 FHIR", "MCP 2024-11-05"],
+          security: ["HIPAA compliance", "TLS 1.3", "OAuth 2.0"],
+          performance: ["<5s response time", "99.9% uptime", "real-time sync"]
+        },
+        contact: "Contact development team for hospital integration partnerships"
+      });
+    } catch (error) {
+      console.error('Hospital integration status error:', error);
+      res.status(500).json({ error: 'Integration status service error' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
