@@ -192,6 +192,7 @@ export default function WeatherSentinelMCP() {
   const [showDemoPopup, setShowDemoPopup] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
   const [showMassTextAlert, setShowMassTextAlert] = useState(false);
+  const [showAlertsModal, setShowAlertsModal] = useState(false);
   const [agents, setAgents] = useState<AgentStatus[]>([
     {
       id: '1',
@@ -883,7 +884,7 @@ export default function WeatherSentinelMCP() {
             </Card>
           </div>
 
-          <div className="relative group">
+          <div className="relative group cursor-pointer" onClick={() => setShowAlertsModal(true)}>
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
             <Card className="relative bg-black/40 backdrop-blur-xl border border-yellow-500/30 rounded-2xl overflow-hidden transform hover:scale-105 transition-all duration-300">
               <CardContent className="p-8 text-center">
@@ -895,10 +896,11 @@ export default function WeatherSentinelMCP() {
                   {environmentalData ? environmentalData.alerts.length : 0}
                 </div>
                 <div className="text-lg font-medium text-yellow-200 mb-2">Active Alerts</div>
-                <div className="text-sm text-yellow-300/70 flex items-center justify-center">
+                <div className="text-sm text-yellow-300/70 flex items-center justify-center mb-2">
                   <Clock className="w-4 h-4 mr-2" />
                   {environmentalData ? new Date(environmentalData.timestamp).toLocaleTimeString() : '--:--:--'}
                 </div>
+                <div className="text-xs text-yellow-400/60 italic">Click for details</div>
               </CardContent>
             </Card>
           </div>
@@ -1088,6 +1090,173 @@ export default function WeatherSentinelMCP() {
                     ></div>
                   </div>
                   <div className="text-sm text-gray-400 mt-2">Step {demoStep} of 6</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Alerts Detail Modal */}
+        {showAlertsModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-black border border-yellow-500/50 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="p-8">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <AlertTriangle className="w-8 h-8 text-yellow-400" />
+                    <div>
+                      <h2 className="text-3xl font-bold text-yellow-300">Active Weather Alerts</h2>
+                      <p className="text-gray-400">National Weather Service | Harris County, TX</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setShowAlertsModal(false)}
+                    className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-400" />
+                  </button>
+                </div>
+
+                {/* Alert Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 border border-yellow-500/30 rounded-xl p-4">
+                    <div className="text-2xl font-bold text-yellow-300">
+                      {environmentalData ? environmentalData.alerts.length : 0}
+                    </div>
+                    <div className="text-sm text-yellow-200">Total Active Alerts</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-red-900/40 to-orange-900/40 border border-red-500/30 rounded-xl p-4">
+                    <div className="text-2xl font-bold text-red-300">
+                      {environmentalData ? environmentalData.alerts.filter(a => a.severity === 'Extreme' || a.severity === 'Severe').length : 0}
+                    </div>
+                    <div className="text-sm text-red-200">High Priority</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-900/40 to-cyan-900/40 border border-blue-500/30 rounded-xl p-4">
+                    <div className="text-2xl font-bold text-blue-300">
+                      {environmentalData ? new Date(environmentalData.timestamp).toLocaleTimeString() : '--:--:--'}
+                    </div>
+                    <div className="text-sm text-blue-200">Last Updated</div>
+                  </div>
+                </div>
+
+                {/* Alerts List */}
+                {environmentalData && environmentalData.alerts.length > 0 ? (
+                  <div className="space-y-6">
+                    {environmentalData.alerts.map((alert, index) => (
+                      <div 
+                        key={alert.id || index}
+                        className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 border border-yellow-500/30 rounded-2xl p-6"
+                      >
+                        {/* Alert Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className={`p-2 rounded-full ${
+                              alert.severity === 'Extreme' ? 'bg-red-600' :
+                              alert.severity === 'Severe' ? 'bg-orange-600' :
+                              alert.severity === 'Moderate' ? 'bg-yellow-600' :
+                              'bg-blue-600'
+                            }`}>
+                              <AlertTriangle className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-yellow-300">{alert.title || alert.headline}</h3>
+                              <div className="flex items-center space-x-4 text-sm text-gray-400">
+                                <span>Type: {alert.type}</span>
+                                <span>Severity: {alert.severity}</span>
+                                <span>Urgency: {alert.urgency}</span>
+                                <span>Certainty: {alert.certainty}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            alert.severity === 'Extreme' ? 'bg-red-600 text-white' :
+                            alert.severity === 'Severe' ? 'bg-orange-600 text-white' :
+                            alert.severity === 'Moderate' ? 'bg-yellow-600 text-black' :
+                            'bg-blue-600 text-white'
+                          }`}>
+                            {alert.severity}
+                          </div>
+                        </div>
+
+                        {/* Alert Description */}
+                        <div className="mb-4">
+                          <p className="text-gray-200 leading-relaxed">{alert.description}</p>
+                          {alert.instruction && (
+                            <div className="mt-3 p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg">
+                              <div className="text-sm font-medium text-blue-300 mb-1">Instructions:</div>
+                              <p className="text-blue-200 text-sm">{alert.instruction}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Alert Details Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm font-medium text-gray-300 mb-2">Affected Areas:</div>
+                            <div className="space-y-1">
+                              {alert.areas && alert.areas.length > 0 ? (
+                                alert.areas.map((area, i) => (
+                                  <div key={i} className="text-sm text-gray-400 flex items-center">
+                                    <MapPin className="w-3 h-3 mr-2" />
+                                    {area}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-sm text-gray-400">Harris County</div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-300 mb-2">Timeline:</div>
+                            <div className="space-y-2">
+                              {alert.onset && (
+                                <div className="text-sm text-gray-400 flex items-center">
+                                  <Clock className="w-3 h-3 mr-2" />
+                                  Onset: {new Date(alert.onset).toLocaleString()}
+                                </div>
+                              )}
+                              {alert.expires && (
+                                <div className="text-sm text-gray-400 flex items-center">
+                                  <Clock className="w-3 h-3 mr-2" />
+                                  Expires: {new Date(alert.expires).toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Data Source */}
+                        <div className="mt-4 pt-4 border-t border-gray-700">
+                          <div className="text-xs text-gray-500">
+                            Source: National Weather Service | Alert ID: {alert.id || `NWS-${index + 1}`}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-400" />
+                    <h3 className="text-xl font-medium text-green-300 mb-2">No Active Alerts</h3>
+                    <p className="text-gray-400">All clear - no weather alerts currently active for Harris County</p>
+                    <div className="mt-4 text-sm text-gray-500">
+                      Last checked: {environmentalData ? new Date(environmentalData.timestamp).toLocaleString() : 'Never'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Modal Footer */}
+                <div className="mt-8 pt-6 border-t border-gray-700 flex items-center justify-between">
+                  <div className="text-sm text-gray-400">
+                    Data refreshes automatically every 60 seconds
+                  </div>
+                  <button 
+                    onClick={() => setShowAlertsModal(false)}
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-lg font-medium transition-colors"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
