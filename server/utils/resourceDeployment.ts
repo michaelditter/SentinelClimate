@@ -250,9 +250,16 @@ export function generateDeploymentScenario(
   const affectedPercentage = county.isRural ? 0.15 : 0.25; // 15% rural, 25% urban
   const vulnerablePercentage = county.isRural ? 0.08 : 0.12; // 8% rural, 12% urban
   
+  const description = scenarioType === 'flood' && county.isRural 
+    ? `Flood watch for ${county.majorWaterways?.join(' and ')} affecting rural population. Resources on standby for ${county.populationDensity} people per square mile.`
+    : scenarioType === 'heat'
+    ? `Heat emergency affecting ${county.isRural ? 'rural' : 'urban'} population. Resource deployment scaled for ${county.populationDensity} people per square mile.`
+    : `Emergency scenario affecting ${county.isRural ? 'rural' : 'urban'} population.`;
+
   return {
     scenarioType,
     severity,
+    description,
     duration: scenarioType === 'flood' ? 72 : 48, // floods last longer
     affectedPopulation: Math.ceil(county.population * affectedPercentage),
     vulnerablePopulation: Math.ceil(county.population * vulnerablePercentage)
