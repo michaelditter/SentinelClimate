@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Truck, Building, Users, Package } from 'lucide-react';
 import { ResourceDeployment } from '@/types/geo.types';
 
