@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${elevenlabsApiKey}`
+                    'xi-api-key': elevenlabsApiKey
                   },
                   body: JSON.stringify({
                     agent_phone_number_id: '***REMOVED-PHONE-ID***',
@@ -454,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${elevenlabsApiKey}`
+                      'xi-api-key': elevenlabsApiKey
                     },
                     body: JSON.stringify({
                       agent_id: '***REMOVED-AGENT-ID***',
@@ -476,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${elevenlabsApiKey}`
+                      'xi-api-key': elevenlabsApiKey
                     },
                     body: JSON.stringify({
                       agent_id: '***REMOVED-AGENT-ID***',
@@ -766,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const agentResponse = await fetch(
         'https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***',
         {
-          headers: { 'Authorization': `Bearer ${elevenlabsApiKey}` }
+          headers: { 'xi-api-key': elevenlabsApiKey }
         }
       );
       
@@ -774,7 +774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const phoneResponse = await fetch(
         'https://api.elevenlabs.io/v1/convai/phone/phone-numbers',
         {
-          headers: { 'Authorization': `Bearer ${elevenlabsApiKey}` }
+          headers: { 'xi-api-key': elevenlabsApiKey }
         }
       );
       
