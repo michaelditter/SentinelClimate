@@ -234,7 +234,12 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold">{countyData?.name || 'County'} Deep Dive Analysis</h2>
+          <div>
+            <h2 className="text-2xl font-bold">{countyData?.name || 'County'} Deep Dive Analysis</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              * Simulation using both real government data and demonstration scenarios
+            </p>
+          </div>
           <Select value={activeCounty} onValueChange={handleCountyChange}>
             <SelectTrigger className="w-64">
               <SelectValue placeholder="Select a county" />
