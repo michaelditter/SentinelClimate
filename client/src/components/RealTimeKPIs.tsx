@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, Activity, Zap, Thermometer, Users, MapPin } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Zap, Thermometer, Users, MapPin, Cloud } from 'lucide-react';
 
 interface KPIData {
   grid: {
@@ -30,6 +30,13 @@ interface KPIData {
     alertLevel: 'CRITICAL' | 'WARNING' | 'WATCH' | 'NORMAL';
     daysOut: number;
     nextUpdate: string;
+  };
+  airQuality: {
+    aqi: number;
+    category: string;
+    primaryPollutant: string;
+    lastUpdate: string;
+    source: string;
   };
   healthcare: {
     capacityUtilization: number;
@@ -99,6 +106,15 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
     }
   };
 
+  const getAQIColor = (aqi: number) => {
+    if (aqi <= 50) return 'bg-green-500';     // Good
+    if (aqi <= 100) return 'bg-yellow-500';   // Moderate
+    if (aqi <= 150) return 'bg-orange-500';   // Unhealthy for Sensitive Groups
+    if (aqi <= 200) return 'bg-red-500';      // Unhealthy
+    if (aqi <= 300) return 'bg-purple-500';   // Very Unhealthy
+    return 'bg-red-800';                      // Hazardous
+  };
+
   const getTrendIcon = (trend: number) => {
     if (trend > 0) return <TrendingUp className="h-4 w-4 text-red-500" />;
     if (trend < 0) return <TrendingDown className="h-4 w-4 text-green-500" />;
@@ -139,7 +155,7 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
       </div>
 
       {/* Primary KPIs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         
         {/* Grid Status */}
         <Card className="border-l-4 border-l-blue-500">
@@ -238,6 +254,36 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
           </CardContent>
         </Card>
 
+        {/* EPA Air Quality */}
+        <Card className="border-l-4 border-l-cyan-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Cloud className="h-4 w-4 mr-2" />
+              EPA Air Quality
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{kpiData.airQuality.aqi}</div>
+            <div className="text-xs text-gray-500">AQI Index</div>
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-xs">
+                <span>Category</span>
+                <span>{kpiData.airQuality.category}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Primary Pollutant</span>
+                <span>{kpiData.airQuality.primaryPollutant}</span>
+              </div>
+              <div className="text-xs text-gray-500">
+                Source: {kpiData.airQuality.source}
+              </div>
+            </div>
+            <Badge className={`mt-2 ${getAQIColor(kpiData.airQuality.aqi)} text-white`}>
+              {kpiData.airQuality.category}
+            </Badge>
+          </CardContent>
+        </Card>
+
         {/* Hospital Capacity from CDC */}
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="pb-2">
@@ -273,7 +319,7 @@ const RealTimeKPIs: React.FC<RealTimeKPIsProps> = ({ data }) => {
           <CardTitle className="text-lg">Live Data Sources</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
             <div>
               <div className="font-medium">{COUNTY_OPTIONS[selectedCounty].gridOperator} Grid Data</div>
               <div className="text-gray-600">Real-time load: {kpiData.grid.currentLoad.toLocaleString()} MW</div>

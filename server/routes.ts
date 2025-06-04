@@ -1789,6 +1789,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error(`Weather fetch error for ${county}:`, error);
       }
+
+      // Fetch EPA air quality data for the county
+      let airQualityData = null;
+      try {
+        const zipCodes = {
+          'harris-tx': '77002',      // Houston downtown
+          'maricopa-az': '85001',    // Phoenix downtown  
+          'los-angeles-ca': '90012'  // LA downtown
+        };
+        
+        const zipCode = zipCodes[county as keyof typeof zipCodes] || zipCodes['harris-tx'];
+        
+        // Try EPA AirNow API first (requires API key)
+        const airNowUrl = `https://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=${zipCode}&distance=25&API_KEY=${process.env.AIRNOW_API_KEY}`;
+        
+        if (process.env.AIRNOW_API_KEY) {
+          const airResponse = await fetch(airNowUrl, {
+            headers: { 'User-Agent': userAgent }
+          });
+          
+          if (airResponse.ok) {
+            const airData = await airResponse.json();
+            if (airData && airData.length > 0) {
+              // Find PM2.5 and Ozone readings
+              const pm25 = airData.find((reading: any) => reading.ParameterName === 'PM2.5');
+              const ozone = airData.find((reading: any) => reading.ParameterName === 'OZONE');
+              
+              airQualityData = {
+                aqi: pm25?.AQI || ozone?.AQI || 50,
+                category: pm25?.Category?.Name || ozone?.Category?.Name || 'Good',
+                primaryPollutant: pm25 ? 'PM2.5' : 'Ozone',
+                lastUpdate: pm25?.DateObserved || ozone?.DateObserved || new Date().toISOString(),
+                source: 'EPA AirNow'
+              };
+              
+              console.log(`EPA Air Quality for ${county}: AQI ${airQualityData.aqi} (${airQualityData.category})`);
+            }
+          }
+        }
+        
+        // Fallback to county-specific AQI estimates if EPA API unavailable
+        if (!airQualityData) {
+          const countyAQI = {
+            'harris-tx': { aqi: 65, category: 'Moderate', pollutant: 'Ozone' },
+            'maricopa-az': { aqi: 85, category: 'Moderate', pollutant: 'PM2.5' },
+            'los-angeles-ca': { aqi: 75, category: 'Moderate', pollutant: 'Ozone' }
+          };
+          
+          const estimate = countyAQI[county as keyof typeof countyAQI] || countyAQI['harris-tx'];
+          airQualityData = {
+            aqi: estimate.aqi,
+            category: estimate.category,
+            primaryPollutant: estimate.pollutant,
+            lastUpdate: new Date().toISOString(),
+            source: 'Regional Estimate'
+          };
+          
+          console.log(`Air Quality estimate for ${county}: AQI ${airQualityData.aqi} (${airQualityData.category})`);
+        }
+        
+      } catch (error) {
+        console.error(`Air quality fetch error for ${county}:`, error);
+        // Default air quality data
+        airQualityData = {
+          aqi: 50,
+          category: 'Good',
+          primaryPollutant: 'PM2.5',
+          lastUpdate: new Date().toISOString(),
+          source: 'Fallback'
+        };
+      }
       
       // Calculate county-specific provider coverage from NPI registry
       const providerData = calculateCountyProviderCoverage(county);
@@ -1814,6 +1885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           daysOut: 5,
           nextUpdate: new Date(Date.now() + 3 * 60 * 60 * 1000).toLocaleTimeString()
         },
+        airQuality: airQualityData,
         healthcare: healthcareData
       };
       
