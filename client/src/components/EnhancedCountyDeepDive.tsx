@@ -120,66 +120,60 @@ const EnhancedCountyDeepDive: React.FC<EnhancedCountyDeepDiveProps> = ({ selecte
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
 
-  useEffect(() => {
-    if (selectedCounty) {
-      fetchCountyData(selectedCounty);
-    }
-  }, [selectedCounty]);
+  const currentFips = selectedCounty?.fips || '48201';
 
-  const fetchCountyData = async (county: any) => {
-    setLoading(true);
-    try {
-      const fips = county.fips || '48201'; // Default to Harris County
-      const response = await fetch(`/api/county-analysis/${fips}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/county-analysis/${currentFips}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (isMounted) {
+          // Ensure data structure matches expected format
+          const processedData = {
+            ...data,
+            predictions: data.predictions || {
+              edVisits: { predicted: 0, baseline: 0, increasePercentage: 0, breakdown: {} },
+              mentalHealth: { counselingDemand: 0, crisisCalls: 0, telehealthSessions: 0, increasePercentage: 0 },
+              specialty: { cardiology: { predictedVisits: 0, increasePercentage: 0 }, nephrology: { predictedVisits: 0, increasePercentage: 0 }, geriatrics: { predictedVisits: 0, increasePercentage: 0 } },
+              remote: { telehealthSessions: 0, mentalHealthRemote: 0, chronicCareMonitoring: 0, increasePercentage: 0 }
+            },
+            providers: data.providers || [],
+            forecast: data.forecast || [],
+            vulnerable: data.vulnerable || { totalCount: 0, seniors: 0, noAC: 0, poverty: 0 },
+            weather: data.weather || { heatIndex: 0, temperature: 0, humidity: 0, alertLevel: 'LOW', trend: 0, nwsOffice: '', urbanHeatIsland: 0 },
+            grid: data.grid || { operator: '', zone: '', reserveMargin: 0, capacityUtilization: 0, status: '', regionalLoad: 0 },
+            healthcare: data.healthcare || { healthcareRegion: '', availableBeds: 0, totalBeds: 0, edCapacity: 0, avgResponseTime: 0, surgeCapacity: 0 }
+          };
+          
+          setCountyData(processedData);
+        }
+      } catch (error) {
+        console.error('Error fetching county data:', error);
+        if (isMounted) {
+          setCountyData(null);
+        }
       }
       
-      const data = await response.json();
-      
-      // Ensure data structure matches expected format
-      const processedData = {
-        ...data,
-        predictions: data.predictions || {
-          edVisits: { predicted: 0, baseline: 0, increasePercentage: 0, breakdown: {} },
-          mentalHealth: { counselingDemand: 0, crisisCalls: 0, telehealthSessions: 0, increasePercentage: 0 },
-          specialty: { cardiology: { predictedVisits: 0, increasePercentage: 0 }, nephrology: { predictedVisits: 0, increasePercentage: 0 }, geriatrics: { predictedVisits: 0, increasePercentage: 0 } },
-          remote: { telehealthSessions: 0, mentalHealthRemote: 0, chronicCareMonitoring: 0, increasePercentage: 0 }
-        },
-        providers: data.providers || [],
-        forecast: data.forecast || [],
-        vulnerable: data.vulnerable || { totalCount: 0, seniors: 0, noAC: 0, poverty: 0 },
-        weather: data.weather || { heatIndex: 0, temperature: 0, humidity: 0, alertLevel: 'LOW', trend: 0, nwsOffice: '', urbanHeatIsland: 0 },
-        grid: data.grid || { operator: '', zone: '', reserveMargin: 0, capacityUtilization: 0, status: '', regionalLoad: 0 },
-        healthcare: data.healthcare || { healthcareRegion: '', availableBeds: 0, totalBeds: 0, edCapacity: 0, avgResponseTime: 0, surgeCapacity: 0 }
-      };
-      
-      setCountyData(processedData);
-    } catch (error) {
-      console.error('Error fetching county data:', error);
-      // Set fallback data on error
-      setCountyData({
-        name: county.name || 'Unknown County',
-        fips: county.fips || '48201',
-        lastUpdated: new Date().toISOString(),
-        overallRisk: 'MODERATE',
-        weather: { heatIndex: 95, temperature: 90, humidity: 65, alertLevel: 'MODERATE', trend: 0, nwsOffice: 'HGX', urbanHeatIsland: 8 },
-        grid: { operator: 'ERCOT', zone: 'HOUSTON', reserveMargin: 2000, capacityUtilization: 70, status: 'Normal', regionalLoad: 15000 },
-        healthcare: { healthcareRegion: 'Texas Medical Center', availableBeds: 500, totalBeds: 800, edCapacity: 75, avgResponseTime: 15, surgeCapacity: 200 },
-        vulnerable: { totalCount: 150000, seniors: 12, noAC: 8, poverty: 16 },
-        providers: [],
-        predictions: {
-          edVisits: { predicted: 1650, baseline: 1200, increasePercentage: 38, breakdown: { heatFactor: 1.6, durationFactor: 1.0, vulnerabilityFactor: 1.2, powerOutageFactor: 1.0 } },
-          mentalHealth: { counselingDemand: 9500, crisisCalls: 400, telehealthSessions: 6650, increasePercentage: 60 },
-          specialty: { cardiology: { predictedVisits: 850, increasePercentage: 180 }, nephrology: { predictedVisits: 213, increasePercentage: 310 }, geriatrics: { predictedVisits: 450, increasePercentage: 120 } },
-          remote: { telehealthSessions: 5680, mentalHealthRemote: 2270, chronicCareMonitoring: 151360, increasePercentage: 70 }
-        },
-        forecast: []
-      });
-    }
-    setLoading(false);
-  };
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentFips]);
 
   const fetchSocialMediaIntelligence = async () => {
     setSocialLoading(true);
