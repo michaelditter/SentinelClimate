@@ -31,7 +31,7 @@ interface CrisisScenario {
 interface Agent {
   id: string;
   name: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   role: string;
   capabilities: string[];

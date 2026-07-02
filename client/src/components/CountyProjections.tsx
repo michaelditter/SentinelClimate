@@ -212,7 +212,7 @@ const CountyProjections: React.FC<CountyProjectionsProps> = ({ onCountySelect })
                   </div>
                   <div className="flex justify-between">
                     <span>This Weekend:</span>
-                    <Badge className={getRiskColor(county.weekendRisk)} size="sm">
+                    <Badge className={getRiskColor(county.weekendRisk)}>
                       {county.weekendRisk}
                     </Badge>
                   </div>

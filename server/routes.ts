@@ -4,10 +4,14 @@ import { storage } from "./storage";
 import { countyProfiles } from "./config/countyProfiles";
 import healthcarePredictions from "./utils/healthcarePredictions";
 import { calculateResourceDeployment, getCountyProfile, generateDeploymentScenario } from "./utils/resourceDeployment";
+import { registerIntelligenceRoutes } from "./routes/intelligence";
 import OpenAI from 'openai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+
+  // OSINT → multi-agent → allocation pipeline routes
+  registerIntelligenceRoutes(app);
+
   // Live Operational Weather Data (Real NWS Integration)
   app.get("/api/weather-sentinel-operational", async (req, res) => {
     try {
@@ -106,9 +110,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Determine threat level based on real conditions
       let threatLevel = 'LOW';
-      if (heatIndex >= 125) threatLevel = 'CRITICAL';
-      else if (heatIndex >= 105) threatLevel = 'HIGH';
-      else if (heatIndex >= 90) threatLevel = 'MODERATE';
+      if (heatIndex !== null) {
+        if (heatIndex >= 125) threatLevel = 'CRITICAL';
+        else if (heatIndex >= 105) threatLevel = 'HIGH';
+        else if (heatIndex >= 90) threatLevel = 'MODERATE';
+      }
 
       const operationalData = {
         timestamp: new Date().toISOString(),
@@ -193,9 +199,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ambulanceDiversion: false,
           massIncidentPlan: 'STANDBY'
         },
-        dataSource: 'CMS Hospital Compare API / EMTALA System',
+        dataSource: 'Simulated planning estimates (live CMS/EMTALA integration not yet connected)',
         lastUpdate: new Date().toISOString(),
-        operationalStatus: 'LIVE'
+        operationalStatus: 'SIMULATED'
       };
 
       res.json(operationalHospitalData);
@@ -378,10 +384,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Add data source information and timestamp
-      gridData.dataSource = dataSource;
-      gridData.timestamp = new Date().toISOString();
-      
-      res.json(gridData);
+      res.json({
+        ...gridData,
+        dataSource,
+        timestamp: new Date().toISOString()
+      });
 
     } catch (error) {
       console.error('Power grid API error:', error);
@@ -1081,7 +1088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               } catch (error) {
                 lastError = error;
-                console.log('Option 1 failed, trying Option 2:', error.message);
+                console.log('Option 1 failed, trying Option 2:', error instanceof Error ? error.message : String(error));
                 
                 // Option 2: Direct phone API
                 try {
@@ -1104,7 +1111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 } catch (error2) {
                   lastError = error2;
-                  console.log('Option 2 failed, trying Option 3:', error2.message);
+                  console.log('Option 2 failed, trying Option 3:', error2 instanceof Error ? error2.message : String(error2));
                   
                   // Option 3: Conversations with phone mode
                   agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/conversations', {
@@ -1193,16 +1200,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Demonstration mode - simulate successful call without external APIs
+      // Demonstration mode - simulate successful call without external APIs.
+      // No real call is placed; the response says so explicitly.
       res.json({
         success: true,
+        simulated: true,
         callSid: `EC-DEMO-${Date.now()}`,
-        message: 'Emergency call initiated successfully (Demo Mode)',
+        message: 'Emergency call simulated (Demo Mode) - no real call was placed',
         agentType,
         targetPhone,
         targetName,
         communicationScript: message,
-        mode: 'demonstration'
+        mode: 'demo'
       });
 
     } catch (error) {
@@ -1215,9 +1224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/emergency-sms", async (req, res) => {
     try {
       const { phoneNumber, message, agentType } = req.body;
-      
-      if (!phoneNumber || !message) {
-        return res.status(400).json({ error: 'Phone number and message are required' });
+
+      if (!phoneNumber || !message || typeof agentType !== 'string' || !agentType.trim()) {
+        return res.status(400).json({ error: 'Phone number, message, and agent type are required' });
       }
 
       const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -1231,8 +1240,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: new URLSearchParams({
-          To: phoneNumber,
-          From: twilioPhoneNumber,
+          To: String(phoneNumber),
+          From: twilioPhoneNumber ?? '',
           Body: `[SENTINEL AI ${agentType.toUpperCase()}] ${message}`
         })
       });
@@ -1365,7 +1374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper functions for crisis calls
   function generateCrisisScript(agentType: string, targetName: string, analysisData: any): string {
-    const scripts = {
+    const scripts: Record<string, string> = {
       'SENTINEL': `Hello ${targetName}, this is the Sentinel AI Weather Monitoring System calling with an urgent climate alert. We have detected an extreme heat event developing in your area with temperatures expected to reach ${analysisData?.SENTINEL?.peakTemp || 119} degrees Fahrenheit over the next ${analysisData?.SENTINEL?.duration || 72} hours. Heat index values may exceed ${analysisData?.SENTINEL?.heatIndex || 125} degrees. Our confidence level is ${analysisData?.SENTINEL?.confidence || 94} percent. We recommend immediate activation of heat emergency protocols including opening public cooling centers, issuing public heat warnings, and preparing emergency medical services for increased demand. This is a high-priority alert requiring immediate attention. Please confirm receipt and coordinate with emergency management. Thank you.`,
       
       'MEDIC': `Hello ${targetName}, this is the Sentinel AI Medical Coordination Agent with a critical healthcare surge alert. Our predictive models indicate a ${analysisData?.MEDIC?.surgePrediction || 137} percent increase in emergency department visits expected within the next 48 hours due to extreme heat conditions. We anticipate ${analysisData?.MEDIC?.expectedCases || 850} cases affecting a vulnerable population of ${analysisData?.MEDIC?.vulnerablePopulation || 45000} individuals. Hospital capacity is currently at ${analysisData?.MEDIC?.hospitalCapacity || 78} percent. We recommend immediate implementation of hospital surge protocols and consider activating additional medical staff. Current prediction confidence is ${analysisData?.MEDIC?.confidence || 89} percent. Please acknowledge receipt and coordinate appropriate medical response.`,
@@ -1379,7 +1388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   function getAgentVoiceId(agentType: string): string {
-    const voices = {
+    const voices: Record<string, string> = {
       'SENTINEL': 'EXAVITQu4vr4xnSDxMaL',   // Professional analyst
       'MEDIC': 'ThT5KcBeYPX3keUQqHPh',     // Caring healthcare professional  
       'DISPATCHER': 'onwK4e9ZLuTAKqWW03F9', // Efficient coordinator
@@ -1608,28 +1617,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           gridStability: reserveMargin > 3000 ? 'Normal' : reserveMargin > 2000 ? 'Watch' : 'Warning',
           regionalData: {
             local: { load: currentLoad * 0.25, generation: currentLoad * 0.3, stability: 'Normal' }
-          }
+          } as Record<string, { load: number; generation: number; stability: string }>
         };
       }
     } catch (error) {
       console.error('Grid data fetch error:', error);
     }
     return null;
-  }
-
-  function extractHeatIndexFromWeatherAPI(weatherData: any): number {
-    const temp = extractTemperature(weatherData);
-    const humidity = extractHumidity(weatherData);
-    // Simplified heat index calculation
-    return Math.round(temp + (humidity * 0.15));
-  }
-
-  function calculateHeatAlertLevel(heatIndex: number): string {
-    if (heatIndex >= 115) return 'CRITICAL';
-    if (heatIndex >= 105) return 'EXTREME';
-    if (heatIndex >= 100) return 'HIGH';
-    if (heatIndex >= 95) return 'MODERATE';
-    return 'LOW';
   }
 
   function enhancedProviderAnalysis(countyProfile: any, healthData: any) {
@@ -2497,9 +2491,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { county, weatherData, gridData } = req.body;
       
-      // Generate comprehensive social intelligence analysis
+      // Generate comprehensive social intelligence analysis.
+      // Posts and metrics below are invented demonstration content, and the
+      // payload says so.
       const socialIntelligence = {
         timestamp: new Date().toISOString(),
+        dataSource: 'Simulated demonstration data',
         county: county?.name || 'Unknown County',
         analysisScope: {
           platforms: ['Twitter/X', 'Facebook', 'Reddit', 'Nextdoor', 'Local News'],
@@ -2663,179 +2660,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced county analysis endpoint with healthcare predictions
-  app.get("/api/county-analysis/:fips", async (req, res) => {
-    try {
-      const { fips } = req.params;
-      const userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
-      
-      // County profiles data
-      const countyProfiles: any = {
-        "48201": {
-          name: "Harris County",
-          state: "TX",
-          population: 4731145,
-          fips: "48201",
-          coordinates: { lat: 29.7604, lon: -95.3698 },
-          gridOperator: "ERCOT",
-          nwsOffice: "HGX",
-          vulnerabilityFactors: {
-            seniorPopulation: 0.124,
-            housingWithoutAC: 0.08,
-            povertyRate: 0.158,
-            chronicConditions: 0.45,
-            urbanHeatIsland: 8.2
-          },
-          providerBaselines: {
-            cardiology: { needed: 280, nationalRatio: 5.8 },
-            emergency: { needed: 720, nationalRatio: 15.2 },
-            nephrology: { needed: 57, nationalRatio: 1.2 },
-            psychiatry: { needed: 620, nationalRatio: 13.1 },
-            mentalHealth: { needed: 850, nationalRatio: 18.0 },
-            primaryCare: { needed: 3548, nationalRatio: 75.0 }
-          }
-        },
-        "04013": {
-          name: "Maricopa County",
-          state: "AZ",
-          population: 4485414,
-          fips: "04013",
-          coordinates: { lat: 33.4484, lon: -112.0740 },
-          gridOperator: "APS",
-          nwsOffice: "PSR",
-          vulnerabilityFactors: {
-            seniorPopulation: 0.168,
-            housingWithoutAC: 0.02,
-            povertyRate: 0.134,
-            chronicConditions: 0.52,
-            urbanHeatIsland: 12.1
-          },
-          providerBaselines: {
-            cardiology: { needed: 260, nationalRatio: 5.8 },
-            emergency: { needed: 682, nationalRatio: 15.2 },
-            nephrology: { needed: 54, nationalRatio: 1.2 },
-            psychiatry: { needed: 588, nationalRatio: 13.1 },
-            mentalHealth: { needed: 807, nationalRatio: 18.0 },
-            primaryCare: { needed: 3364, nationalRatio: 75.0 }
-          }
-        },
-        "12086": {
-          name: "Miami-Dade County",
-          state: "FL",
-          population: 2701767,
-          fips: "12086",
-          coordinates: { lat: 25.7617, lon: -80.1918 },
-          gridOperator: "FPL",
-          nwsOffice: "MFL",
-          vulnerabilityFactors: {
-            seniorPopulation: 0.198,
-            housingWithoutAC: 0.03,
-            povertyRate: 0.161,
-            chronicConditions: 0.48,
-            urbanHeatIsland: 6.8
-          },
-          providerBaselines: {
-            cardiology: { needed: 157, nationalRatio: 5.8 },
-            emergency: { needed: 411, nationalRatio: 15.2 },
-            nephrology: { needed: 32, nationalRatio: 1.2 },
-            psychiatry: { needed: 354, nationalRatio: 13.1 },
-            mentalHealth: { needed: 486, nationalRatio: 18.0 },
-            primaryCare: { needed: 2026, nationalRatio: 75.0 }
-          }
-        }
-      };
-
-      const countyProfile = countyProfiles[fips] || countyProfiles["48201"];
-      
-      // Fetch weather data using county-specific coordinates
-      const { lat, lon } = countyProfile.coordinates;
-      const weatherResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`, {
-        headers: { 'User-Agent': userAgent }
-      });
-      const weatherData = weatherResponse.ok ? await weatherResponse.json() : null;
-      
-      // Fetch grid data
-      const gridData = await getCurrentPowerGridData();
-      
-      // Calculate enhanced predictions
-      const heatIndex = extractHeatIndexFromWeatherAPI(weatherData);
-      const weatherAnalysis = {
-        heatIndex,
-        gridStatus: calculateGridStatus(gridData?.reserveMargin || 24805),
-        duration: 72 // 3-day heat event simulation
-      };
-      
-      const populationData = {
-        population: countyProfile.population,
-        vulnerablePopulation: Math.round(countyProfile.population * countyProfile.vulnerabilityFactors.seniorPopulation),
-        seniorPopulation: countyProfile.vulnerabilityFactors.seniorPopulation
-      };
-      
-      const edPredictions = calculatePredictedEDVisits(weatherAnalysis, populationData);
-      const mentalHealthPredictions = calculateMentalHealthDemand(weatherAnalysis, populationData);
-      const specialtyCarePredictions = calculateSpecialtyCare(weatherAnalysis, populationData);
-      
-      const enhancedAnalysis = {
-        name: countyProfile.name,
-        fips: countyProfile.fips,
-        population: countyProfile.population,
-        lastUpdated: new Date().toISOString(),
-        overallRisk: calculateOverallRiskLevel(weatherData, gridData, null),
-        weather: {
-          heatIndex,
-          temperature: extractTemperature(weatherData),
-          humidity: extractHumidity(weatherData),
-          alertLevel: extractAlertLevel(weatherData),
-          trend: calculateTemperatureTrend(weatherData),
-          nwsOffice: countyProfile.nwsOffice,
-          urbanHeatIsland: countyProfile.vulnerabilityFactors.urbanHeatIsland
-        },
-        grid: {
-          operator: countyProfile.gridOperator,
-          zone: countyProfile.state,
-          reserveMargin: gridData?.reserveMargin || 24805,
-          capacityUtilization: calculateCapacityUtilization(gridData),
-          status: calculateGridStatus(gridData?.reserveMargin || 24805),
-          regionalLoad: gridData?.systemLoad || 60195
-        },
-        healthcare: {
-          predictions: edPredictions,
-          mentalHealth: mentalHealthPredictions,
-          specialtyCare: specialtyCarePredictions,
-          availableBeds: calculateAvailableBeds(null),
-          totalBeds: calculateTotalBeds(null),
-          edCapacity: calculateEDCapacity(null),
-          avgResponseTime: calculateResponseTime(null)
-        },
-        vulnerable: calculateVulnerablePopulation(fips, null),
-        providers: analyzeProviderCoverage(fips, null),
-        forecast: generate48HourForecast(fips, weatherData, gridData, null)
-      };
-      
-      res.json(enhancedAnalysis);
-    } catch (error) {
-      console.error('Error generating enhanced county analysis:', error);
-      res.status(500).json({ error: 'Failed to generate enhanced county analysis' });
-    }
-  });
-
-  // Initialize OpenAI client
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
   // Social Listening search endpoint
   app.post("/api/social-listening/search", async (req, res) => {
     try {
       const { query, sectionId } = req.body;
-      
+
       if (!query) {
         return res.status(400).json({ error: 'Search query is required' });
       }
 
       if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ error: 'OpenAI API key not configured' });
+        return res.status(503).json({
+          error: 'social listening requires OPENAI_API_KEY',
+          mode: 'unconfigured'
+        });
       }
+
+      // Constructed lazily so the server can boot without OPENAI_API_KEY
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
 
       // Execute real web search using Google Custom Search API
       if (!process.env.GOOGLE_CSE_API_KEY || !process.env.GOOGLE_CSE_ID) {
@@ -2844,7 +2688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Build search query based on section and location
       const locationFocus = "Harris County Texas Houston";
-      const crisisQueries = {
+      const crisisQueries: Record<string, string> = {
         'immediate-threats': `extreme heat warning ${locationFocus} site:weather.gov OR site:noaa.gov`,
         'vulnerable-populations': `elderly heat exhaustion emergency ${locationFocus} hospital`,
         'infrastructure': `ERCOT power grid emergency ${locationFocus} conservation alert`,
@@ -2875,7 +2719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const googleData = await googleResponse.json();
-      const googleResults = googleData.items || [];
+      const googleResults: any[] = googleData.items || [];
 
       // Filter and analyze results with OpenAI for crisis relevance
       const analysisPrompt = `Analyze these web search results for genuine crisis indicators and filter out irrelevant content:
@@ -3132,7 +2976,9 @@ If no results meet crisis relevance criteria, set isRelevant to false and filter
           timestamp: new Date().toISOString(),
           results: section.results,
           alertLevel: section.alertLevel,
-          summary: section.summary
+          summary: section.summary,
+          simulated: true,
+          dataSource: 'Simulated demonstration data (live search unavailable)'
         };
       };
 

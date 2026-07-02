@@ -16,6 +16,7 @@ export interface CountyProfile {
 export interface DeploymentScenario {
   scenarioType: 'heat' | 'flood' | 'combined';
   severity: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL' | 'EXTREME';
+  description: string;
   duration: number; // hours
   affectedPopulation: number;
   vulnerablePopulation: number;

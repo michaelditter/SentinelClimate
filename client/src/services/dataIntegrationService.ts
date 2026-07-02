@@ -183,11 +183,20 @@ export class DataIntegrationService {
         systemLoad: 45000,
         totalCapacity: 85000,
         reserveMargin: 25.5,
+        reserveMarginPercent: 25.5,
         demandForecast: 52000,
         outageCapacity: 2100,
         renewableGeneration: { wind: 8500, solar: 2800, total: 11300 },
         gridStability: 'Normal' as const,
-        emergencyLevel: 1
+        emergencyLevel: 1,
+        gridStressIndex: 20,
+        regionalData: {
+          houston: { load: 15000, generation: 18000, stability: 'Normal' },
+          north: { load: 12000, generation: 15000, stability: 'Normal' },
+          south: { load: 8000, generation: 10000, stability: 'Normal' },
+          west: { load: 5000, generation: 6000, stability: 'Normal' }
+        },
+        criticalAlerts: []
       };
     }
   }

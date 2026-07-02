@@ -1,7 +1,32 @@
+// Shapes as actually consumed below — callers pass richer objects; extra
+// properties are fine.
+export interface WeatherConditions {
+  heatIndex: number;
+  duration: number;
+  gridStatus: string;
+}
+
+export interface PopulationProfile {
+  population: number;
+  vulnerablePopulation: number;
+  seniorPopulation: number;
+}
+
+interface SpecialtyPrediction {
+  predictedVisits: number;
+  increasePercentage: number;
+}
+
+interface SpecialtyCarePredictions {
+  cardiology?: SpecialtyPrediction;
+  nephrology?: SpecialtyPrediction;
+  geriatrics?: SpecialtyPrediction;
+}
+
 const healthcarePredictions = {
-  
+
   // Enhanced ED Visit Prediction Algorithm
-  calculatePredictedEDVisits: (weatherData, populationData, historicalData) => {
+  calculatePredictedEDVisits: (weatherData: WeatherConditions, populationData: PopulationProfile, historicalData: unknown) => {
     const baselineEDVisits = populationData.population * 0.00035; // 0.035% daily baseline
     
     // Temperature correlation factors (validated against Harris County 2019-2023 data)
@@ -43,7 +68,7 @@ const healthcarePredictions = {
   },
 
   // Mental Health Services Demand Prediction
-  calculateMentalHealthDemand: (weatherData, populationData) => {
+  calculateMentalHealthDemand: (weatherData: WeatherConditions, populationData: PopulationProfile) => {
     const baselineCounseling = populationData.population * 0.002; // 0.2% seeking counseling daily
     const baselineCrisis = populationData.population * 0.000085; // Crisis calls per day
     
@@ -68,9 +93,9 @@ const healthcarePredictions = {
     };
   },
 
-  // Specialty Care Demand Predictions  
-  calculateSpecialtyCare: (weatherData, populationData) => {
-    const predictions = {};
+  // Specialty Care Demand Predictions
+  calculateSpecialtyCare: (weatherData: WeatherConditions, populationData: PopulationProfile) => {
+    const predictions: SpecialtyCarePredictions = {};
     
     // Cardiology - heat stress on cardiovascular system
     const cardiacBaselineDaily = populationData.population * 0.00018;
@@ -112,7 +137,7 @@ const healthcarePredictions = {
   },
 
   // Remote Healthcare Service Predictions
-  calculateRemoteServices: (weatherData, populationData) => {
+  calculateRemoteServices: (weatherData: WeatherConditions, populationData: PopulationProfile) => {
     // Telemedicine adoption increases during extreme weather
     const baselineTelehealth = populationData.population * 0.0012; // Daily telehealth usage
     

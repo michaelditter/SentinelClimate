@@ -59,7 +59,9 @@ interface WeatherAlert {
   urgency: 'Past' | 'Future' | 'Expected' | 'Immediate';
   certainty: 'Unknown' | 'Unlikely' | 'Possible' | 'Likely' | 'Observed';
   title: string;
+  headline?: string;
   description: string;
+  instruction?: string;
   areas: string[];
   onset: string;
   expires: string;

@@ -46,6 +46,7 @@ import CountyProjections from './CountyProjections';
 import TriggerOutreach from './TriggerOutreach';
 import SocialListening from './SocialListening';
 import WeatherSentinelMCP from './WeatherSentinelMCP';
+import LiveAgentAnalysis from './LiveAgentAnalysis';
 
 // Data and hooks
 import { resourceDeployments } from '@/data/geoData';
@@ -575,6 +576,9 @@ const SentinelAI: React.FC = () => {
             
             {/* Enhanced Real-Time KPIs Dashboard */}
             <RealTimeKPIs data={realTimeData} />
+
+            {/* Live OSINT multi-agent pipeline */}
+            <LiveAgentAnalysis />
             
             {/* Activity Feed and Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

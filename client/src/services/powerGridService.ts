@@ -148,6 +148,7 @@ export class PowerGridService {
       systemLoad: currentLoad,
       totalCapacity,
       reserveMargin: Math.round(reserveMargin * 10) / 10,
+      reserveMarginPercent: Math.round(reserveMargin * 10) / 10,
       demandForecast: currentLoad * 1.15, // Peak typically 15% higher
       outageCapacity: 2500, // Estimated outages
       renewableGeneration: {
@@ -156,7 +157,29 @@ export class PowerGridService {
         total: windGeneration + solarGeneration
       },
       gridStability,
-      emergencyLevel: gridStability === 'Emergency' ? 4 : gridStability === 'Warning' ? 3 : 1
+      emergencyLevel: gridStability === 'Emergency' ? 4 : gridStability === 'Warning' ? 3 : 1,
+      gridStressIndex: this.stressIndexForStability(gridStability),
+      regionalData: this.defaultRegionalData(),
+      criticalAlerts: []
+    };
+  }
+
+  // Deterministic stand-ins used when the API payload lacks these fields
+  private stressIndexForStability(stability: PowerGridData['gridStability']): number {
+    switch (stability) {
+      case 'Emergency': return 90;
+      case 'Warning': return 65;
+      case 'Watch': return 40;
+      default: return 20;
+    }
+  }
+
+  private defaultRegionalData(): PowerGridData['regionalData'] {
+    return {
+      houston: { load: 15000, generation: 18000, stability: 'Normal' },
+      north: { load: 12000, generation: 15000, stability: 'Normal' },
+      south: { load: 8000, generation: 10000, stability: 'Normal' },
+      west: { load: 5000, generation: 6000, stability: 'Normal' }
     };
   }
 
@@ -210,10 +233,14 @@ export class PowerGridService {
     const totalCapacity = 85000;
     const reserveMargin = ((totalCapacity - currentLoad) / totalCapacity) * 100;
 
+    const gridStability: PowerGridData['gridStability'] =
+      reserveMargin < 12 ? 'Warning' : reserveMargin < 18 ? 'Watch' : 'Normal';
+
     return {
       systemLoad: currentLoad,
       totalCapacity,
       reserveMargin: Math.round(reserveMargin * 10) / 10,
+      reserveMarginPercent: Math.round(reserveMargin * 10) / 10,
       demandForecast: currentLoad * 1.1,
       outageCapacity: isPeakHour ? 4200 : 2100,
       renewableGeneration: {
@@ -221,8 +248,11 @@ export class PowerGridService {
         solar: isPeakHour ? 4200 : 1800, // Solar peaks mid-day
         total: 8500 + (isPeakHour ? 4200 : 1800)
       },
-      gridStability: reserveMargin < 12 ? 'Warning' : reserveMargin < 18 ? 'Watch' : 'Normal',
-      emergencyLevel: reserveMargin < 12 ? 3 : reserveMargin < 18 ? 2 : 1
+      gridStability,
+      emergencyLevel: reserveMargin < 12 ? 3 : reserveMargin < 18 ? 2 : 1,
+      gridStressIndex: this.stressIndexForStability(gridStability),
+      regionalData: this.defaultRegionalData(),
+      criticalAlerts: []
     };
   }
 

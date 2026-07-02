@@ -23,19 +23,30 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface SearchResultItem {
+  id?: string;
+  title: string;
+  url: string;
+  snippet: string;
+  relevanceScore: number;
+  riskLevel: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'WATCH';
+  source?: string;
+  publishedDate?: string;
+  timestamp?: string;
+}
+
 interface SearchResult {
   id: string;
   query: string;
-  timestamp: Date;
-  results: {
-    title: string;
-    url: string;
-    snippet: string;
-    relevanceScore: number;
-    riskLevel: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'WATCH';
-  }[];
-  alertLevel: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'WATCH';
+  timestamp: Date | string;
+  results: SearchResultItem[];
+  // 'NONE' = scan ran but no genuine crisis indicators were found
+  alertLevel: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'WATCH' | 'NONE';
   summary: string;
+  // Server sets these when the payload is fallback/demonstration data —
+  // fabricated alerts must never render as real intelligence.
+  simulated?: boolean;
+  dataSource?: string;
 }
 
 interface SectionConfig {
@@ -230,7 +241,9 @@ const SocialListening: React.FC = () => {
           timestamp: r.timestamp || new Date().toISOString()
         })) : [],
         alertLevel: result.alertLevel || 'NONE',
-        summary: result.summary || 'No analysis available'
+        summary: result.summary || 'No analysis available',
+        simulated: result.simulated === true,
+        dataSource: typeof result.dataSource === 'string' ? result.dataSource : undefined
       }));
 
       setSections(prev => prev.map(s => 
@@ -469,11 +482,20 @@ const SocialListening: React.FC = () => {
                           className="bg-gray-900/50 p-3 rounded-lg space-y-2"
                         >
                           <div className="flex items-center justify-between">
-                            <Badge className={`${getRiskLevelColor(result.alertLevel)} text-white text-xs`}>
-                              {result.alertLevel}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge className={`${getRiskLevelColor(result.alertLevel)} text-white text-xs`}>
+                                {result.alertLevel}
+                              </Badge>
+                              {result.simulated && (
+                                <Badge className="bg-gray-600 text-white text-xs" title={result.dataSource}>
+                                  SIMULATED
+                                </Badge>
+                              )}
+                            </div>
                             <div className="text-xs text-gray-400">
-                              {result.results.length} verified sources
+                              {result.simulated
+                                ? 'demonstration data — not live intelligence'
+                                : `${result.results.length} verified sources`}
                             </div>
                           </div>
                           
