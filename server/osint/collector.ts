@@ -5,7 +5,7 @@ import type {
   HazardSignal,
   OsintSnapshot,
   SourceStatus,
-} from "@shared/intelligence";
+} from "../../shared/intelligence";
 import { errorMessage } from "./http";
 import {
   NWS_ALERTS_SOURCE,

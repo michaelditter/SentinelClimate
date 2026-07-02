@@ -4,7 +4,7 @@ import type {
   HazardType,
   SourceStatus,
   WeatherSummary,
-} from "@shared/intelligence";
+} from "../../shared/intelligence";
 import { asArray, asNumber, asRecord, asString, errorMessage, fetchJson } from "./http";
 
 const API = "https://api.weather.gov";

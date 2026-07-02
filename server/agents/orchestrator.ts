@@ -13,8 +13,8 @@ import type {
   CrisisAssessment,
   CrisisDecision,
   RiskLevel,
-} from "@shared/intelligence";
-import { DECISION_DISCLAIMER } from "@shared/intelligence";
+} from "../../shared/intelligence";
+import { DECISION_DISCLAIMER } from "../../shared/intelligence";
 import { resolveCounty } from "../config/counties";
 import { collectOsintSnapshot } from "../osint/collector";
 import { computeRiskScore, planAllocation } from "../allocation/engine";

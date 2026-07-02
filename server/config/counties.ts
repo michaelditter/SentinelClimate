@@ -3,7 +3,7 @@
 // planning estimates, and USGS gauge site ids. Where a profile exists in
 // countyProfiles.ts we reuse its name/state/population rather than restating.
 
-import type { CountyRef } from "@shared/intelligence";
+import type { CountyRef } from "../../shared/intelligence";
 import { countyProfiles } from "./countyProfiles";
 
 const harris = countyProfiles["48201"];

@@ -6,7 +6,7 @@
 // used for every resource kind. Replace with live feeds when they land; until
 // then, degraded provenance is carried on the OsintSnapshot source list.
 
-import type { CountyRef, ResourceInventoryItem } from "@shared/intelligence";
+import type { CountyRef, ResourceInventoryItem } from "../../shared/intelligence";
 
 // Counties on the Texas Gulf Coast keep an enlarged high-water fleet.
 const COASTAL_TX_FIPS = new Set(["48201", "48245"]);

@@ -8,7 +8,7 @@ import type {
   HazardType,
   OsintSnapshot,
   RiskLevel,
-} from "@shared/intelligence";
+} from "../../shared/intelligence";
 import { computeRiskScore } from "../allocation/engine";
 
 // Aligned with the CrisisDecision ladder (<40 MONITOR, 40–69 DEPLOY,

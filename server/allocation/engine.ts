@@ -12,7 +12,7 @@ import type {
   OsintSnapshot,
   ResourceKind,
   UnmetNeed,
-} from "@shared/intelligence";
+} from "../../shared/intelligence";
 import { getInventory } from "./inventory";
 
 const SEVERITY_WEIGHT: Record<HazardSignal["severity"], number> = {

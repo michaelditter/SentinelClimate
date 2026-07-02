@@ -1,4 +1,4 @@
-import type { CountyRef, FloodGaugeReading, SourceStatus } from "@shared/intelligence";
+import type { CountyRef, FloodGaugeReading, SourceStatus } from "../../shared/intelligence";
 import { asArray, asNumber, asRecord, asString, errorMessage, fetchJson } from "./http";
 
 export const USGS_SOURCE = "USGS Water Services";

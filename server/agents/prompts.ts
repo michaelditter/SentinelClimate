@@ -2,7 +2,7 @@
 // snapshot (plus prior agents' reports) as a JSON user message and must return
 // strict JSON matching the AgentReport subset the orchestrator parses.
 
-import type { AgentName } from "@shared/intelligence";
+import type { AgentName } from "../../shared/intelligence";
 
 const OUTPUT_CONTRACT = `
 OUTPUT FORMAT — respond with a single JSON object and NOTHING else (no markdown

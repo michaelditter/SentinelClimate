@@ -1,4 +1,4 @@
-import type { CountyRef, GridSummary, SourceStatus } from "@shared/intelligence";
+import type { CountyRef, GridSummary, SourceStatus } from "../../shared/intelligence";
 import { asArray, asNumber, asRecord, asString, errorMessage, fetchJson } from "./http";
 
 export const EIA_SOURCE = "EIA Grid Demand";

@@ -1,4 +1,4 @@
-import type { CountyRef, DisasterDeclaration, SourceStatus } from "@shared/intelligence";
+import type { CountyRef, DisasterDeclaration, SourceStatus } from "../../shared/intelligence";
 import { asArray, asNumber, asRecord, asString, errorMessage, fetchJson } from "./http";
 
 export const FEMA_SOURCE = "FEMA Disaster Declarations";

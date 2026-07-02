@@ -1,4 +1,4 @@
-import type { AirQualitySummary, CountyRef, SourceStatus } from "@shared/intelligence";
+import type { AirQualitySummary, CountyRef, SourceStatus } from "../../shared/intelligence";
 import { asArray, asNumber, asRecord, asString, errorMessage, fetchJson } from "./http";
 
 export const AIRNOW_SOURCE = "EPA AirNow";
