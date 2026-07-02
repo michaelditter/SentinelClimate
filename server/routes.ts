@@ -218,16 +218,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Latitude and longitude are required' });
       }
 
-      const nwsToken = '***REMOVED-NOAA-TOKEN***';
+      // NWS requires no API key — only a User-Agent identifying the app
       const userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
-      
+
       // Get weather data from National Weather Service
       const pointResponse = await fetch(
         `https://api.weather.gov/points/${latitude},${longitude}`,
         {
           headers: {
-            'User-Agent': userAgent,
-            'token': nwsToken
+            'User-Agent': userAgent
           }
         }
       );
@@ -237,12 +236,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const pointData = await pointResponse.json();
-      
+
       // Get forecast data
       const forecastResponse = await fetch(pointData.properties.forecast, {
         headers: {
-          'User-Agent': userAgent,
-          'token': nwsToken
+          'User-Agent': userAgent
         }
       });
 
@@ -252,13 +250,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const forecastData = await forecastResponse.json();
 
-      // Get air quality from EPA
-      const epaApiKey = '***REMOVED-AIRNOW-KEY***';
-      const airQualityResponse = await fetch(
-        `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${latitude}&longitude=${longitude}&distance=25&API_KEY=${epaApiKey}`
-      );
+      // Get air quality from EPA AirNow (optional — requires AIRNOW_API_KEY)
+      const epaApiKey = process.env.AIRNOW_API_KEY;
+      const airQualityResponse = epaApiKey
+        ? await fetch(
+            `https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=${latitude}&longitude=${longitude}&distance=25&API_KEY=${epaApiKey}`
+          )
+        : null;
 
-      const airQualityData = airQualityResponse.ok ? await airQualityResponse.json() : null;
+      const airQualityData = airQualityResponse?.ok ? await airQualityResponse.json() : null;
 
       res.json({
         forecast: forecastData,
@@ -312,7 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/power-grid", async (req, res) => {
     try {
       const ercotApiKey = process.env.ERCOT_API_KEY;
-      const eiaApiKey = process.env.EIA_API_KEY || '***REMOVED-EIA-KEY***';
+      const eiaApiKey = process.env.EIA_API_KEY;
       const userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
       
       // Get real-time ERCOT system data
@@ -1058,14 +1058,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               // Option 1: Agent-specific outbound call endpoint
               try {
-                agentCallResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***/phone/outbound-call', {
+                agentCallResponse = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${process.env.ELEVENLABS_AGENT_ID}/phone/outbound-call`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                     'xi-api-key': elevenlabsApiKey
                   },
                   body: JSON.stringify({
-                    agent_phone_number_id: '***REMOVED-PHONE-ID***',
+                    agent_phone_number_id: process.env.ELEVENLABS_PHONE_NUMBER_ID,
                     to_number: formattedPhone,
                     metadata: {
                       caller_name: targetName,
@@ -1092,8 +1092,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       'xi-api-key': elevenlabsApiKey
                     },
                     body: JSON.stringify({
-                      agent_id: '***REMOVED-AGENT-ID***',
-                      agent_phone_number_id: '***REMOVED-PHONE-ID***',
+                      agent_id: process.env.ELEVENLABS_AGENT_ID,
+                      agent_phone_number_id: process.env.ELEVENLABS_PHONE_NUMBER_ID,
                       to_number: formattedPhone
                     })
                   });
@@ -1114,10 +1114,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       'xi-api-key': elevenlabsApiKey
                     },
                     body: JSON.stringify({
-                      agent_id: '***REMOVED-AGENT-ID***',
+                      agent_id: process.env.ELEVENLABS_AGENT_ID,
                       mode: 'phone',
                       phone_config: {
-                        phone_number_id: '***REMOVED-PHONE-ID***',
+                        phone_number_id: process.env.ELEVENLABS_PHONE_NUMBER_ID,
                         to_number: formattedPhone
                       }
                     })
@@ -1399,7 +1399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check agent exists
       const agentResponse = await fetch(
-        'https://api.elevenlabs.io/v1/convai/agents/***REMOVED-AGENT-ID***',
+        `https://api.elevenlabs.io/v1/convai/agents/${process.env.ELEVENLABS_AGENT_ID}`,
         {
           headers: { 'xi-api-key': elevenlabsApiKey }
         }
@@ -1577,7 +1577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   async function getCurrentPowerGridDataForCounty(countyProfile: any) {
     try {
-      const eiaApiKey = process.env.EIA_API_KEY || '***REMOVED-EIA-KEY***';
+      const eiaApiKey = process.env.EIA_API_KEY;
       let response;
       
       // Use different grid operators based on county
@@ -1690,7 +1690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   async function getCurrentPowerGridData() {
     try {
-      const eiaApiKey = process.env.EIA_API_KEY || '***REMOVED-EIA-KEY***';
+      const eiaApiKey = process.env.EIA_API_KEY;
       const response = await fetch(
         `https://api.eia.gov/v2/electricity/rto/region-data/data/?frequency=hourly&data[0]=value&facets[respondent][]=TEX&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=5000&api_key=${eiaApiKey}`,
         { headers: { 'User-Agent': 'SentinelAI/1.0 (info@michaelditter.com)' } }

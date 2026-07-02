@@ -40,9 +40,7 @@ export interface AirQualityData {
 
 export class WeatherService {
   private readonly nwsBaseUrl = 'https://api.weather.gov';
-  private readonly epaBaseUrl = 'https://www.airnowapi.org/aq';
   private readonly userAgent = 'SentinelAI/1.0 (info@michaelditter.com)';
-  private readonly epaApiKey = '***REMOVED-AIRNOW-KEY***';
 
   async getCurrentConditions(latitude: number, longitude: number): Promise<WeatherData> {
     try {
@@ -64,15 +62,15 @@ export class WeatherService {
 
   async getAirQuality(latitude: number, longitude: number): Promise<AirQualityData | null> {
     try {
-      const response = await fetch(
-        `${this.epaBaseUrl}/observation/latLong/current/?format=application/json&latitude=${latitude}&longitude=${longitude}&distance=25&API_KEY=${this.epaApiKey}`
-      );
+      // AirNow requires an API key, so the call goes through the server proxy
+      const response = await fetch(`/api/weather?latitude=${latitude}&longitude=${longitude}`);
 
       if (!response.ok) {
         throw new Error(`Air Quality API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const payload = await response.json();
+      const data = payload.airQuality;
       if (data && data.length > 0) {
         const observation = data[0];
         return {

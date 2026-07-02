@@ -730,7 +730,7 @@ const TriggerOutreach: React.FC<TriggerOutreachProps> = ({ selectedCounty, realT
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <h4 className="font-medium mb-2">ElevenLabs Agent Details</h4>
                     <div className="text-sm space-y-1">
-                      <div>Agent ID: ***REMOVED-AGENT-ID***</div>
+                      <div>Agent ID: configured server-side (ELEVENLABS_AGENT_ID)</div>
                       <div>Voice: Mark - Natural Conversations</div>
                       <div>Max Duration: 10 minutes</div>
                       <div>Capabilities: Crisis communication, Q&A, Resource guidance</div>

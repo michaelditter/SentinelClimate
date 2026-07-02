@@ -402,7 +402,7 @@ const SentinelAI: React.FC = () => {
           gridReserve: kpiData.grid?.reserveMargin || 'Monitoring'
         },
         contactProtocol: {
-          primaryNumber: '1-XXX-XXX-XXXX',
+          primaryNumber: 'Demo line — configured server-side',
           department: 'Texas Emergency Resource Coordination Center',
           requestCode: 'HARRIS-MH-HEAT-2025',
           authorization: 'County Emergency Operations Center'

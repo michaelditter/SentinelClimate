@@ -1,5 +1,5 @@
 # ElevenLabs Emergency Resource Deployment Conversation Script
-## Phone Number: 1-XXX-XXX-XXXX
+## Phone Number: <YOUR-DEMO-LINE-NUMBER>
 ## Texas Emergency Resource Coordination Center
 
 ### OPENING GREETING
@@ -101,7 +101,7 @@ Emergency Operations will receive activation confirmation within 30 minutes. Is 
 - Deployment coordination: Extension 2847
 - Technical support: Extension 1924
 - Emergency escalation: Extension 9911
-- 24/7 operations center: This main number, 1-XXX-XXX-XXXX
+- 24/7 operations center: This main number, <YOUR-DEMO-LINE-NUMBER>
 
 Your virtual network will be fully operational before the next heat advisory period. Stay safe out there, and thank you for protecting Harris County residents."
 
@@ -150,7 +150,7 @@ Your virtual network will be fully operational before the next heat advisory per
    - Add background ambient operations center audio
 
 2. **Phone System Integration:**
-   - Program number 1-XXX-XXX-XXXX
+   - Program number <YOUR-DEMO-LINE-NUMBER>
    - Route to ElevenLabs voice agent
    - Enable real-time conversation flow
    - Implement caller ID recognition for Harris County EOC
