@@ -3,8 +3,12 @@
 
 import type {
   CountyRef,
+  EarthquakeSignal,
+  HospitalCapacitySummary,
   OsintSnapshot,
   SourceStatus,
+  TropicalSystem,
+  WildfireSignal,
 } from "@shared/intelligence";
 
 export const HARRIS: CountyRef = {
@@ -129,6 +133,62 @@ export function floodSnapshot(): OsintSnapshot {
         dischargeCfs: 25_000,
       },
     ],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// All-hazards extension factories (earthquakes/wildfires/tropical/hospital).
+// New in the hazard-feeds wave — additive only; the fixtures above are frozen
+// because the allocation and rules suites assert against their exact values.
+// ---------------------------------------------------------------------------
+
+export function makeQuake(overrides: Partial<EarthquakeSignal> = {}): EarthquakeSignal {
+  return {
+    id: "us7000test",
+    magnitude: 6.2,
+    place: "12 km NE of Baytown, TX",
+    occurredAt: "2026-07-01T15:30:00.000Z",
+    distanceKm: 40,
+    depthKm: 8,
+    ...overrides,
+  };
+}
+
+export function makeWildfire(overrides: Partial<WildfireSignal> = {}): WildfireSignal {
+  return {
+    id: "irwin-test-fire",
+    name: "Sam Houston Complex",
+    acres: 12_000,
+    containmentPct: 30,
+    distanceKm: 100,
+    discoveredAt: "2026-06-29T08:00:00.000Z",
+    ...overrides,
+  };
+}
+
+export function makeTropicalSystem(overrides: Partial<TropicalSystem> = {}): TropicalSystem {
+  return {
+    id: "al052026",
+    name: "Ophelia",
+    classification: "Hurricane",
+    intensityKt: 85,
+    lat: 26.5,
+    lon: -92.0,
+    distanceKm: 400,
+    movement: "315° at 10 kt",
+    ...overrides,
+  };
+}
+
+export function makeHospitalCapacity(
+  overrides: Partial<HospitalCapacitySummary> = {},
+): HospitalCapacitySummary {
+  return {
+    scope: "state",
+    inpatientOccupancyPct: 92.1,
+    icuOccupancyPct: 87.4,
+    reportedAt: "2026-06-30T00:00:00.000Z",
+    ...overrides,
   };
 }
 

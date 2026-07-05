@@ -79,6 +79,70 @@ export interface DisasterDeclaration {
   designatedArea?: string;
 }
 
+export interface EarthquakeSignal {
+  id: string;
+  magnitude: number | null;
+  place: string;
+  occurredAt: string;
+  distanceKm: number | null;
+  depthKm: number | null;
+}
+
+export interface WildfireSignal {
+  id: string;
+  name: string;
+  acres: number | null;
+  containmentPct: number | null;
+  distanceKm: number | null;
+  discoveredAt?: string;
+}
+
+export interface TropicalSystem {
+  id: string;
+  name: string;
+  classification: string;
+  intensityKt: number | null;
+  lat: number | null;
+  lon: number | null;
+  distanceKm: number | null;
+  movement?: string;
+}
+
+export interface HospitalCapacitySummary {
+  /** State-level aggregate — county-level feeds require credentialed access. */
+  scope: "state";
+  inpatientOccupancyPct: number | null;
+  icuOccupancyPct: number | null;
+  reportedAt: string | null;
+}
+
+/** One point on the projected 72-hour risk curve. */
+export interface RiskTrajectoryPoint {
+  at: string;
+  riskScore: number;
+  heatIndexF: number | null;
+  temperatureF: number | null;
+}
+
+export interface RiskTrajectory {
+  points: RiskTrajectoryPoint[];
+  peak: RiskTrajectoryPoint | null;
+  /** Which risk components were projected vs held constant. */
+  method: string;
+}
+
+/** One row of the multi-county risk board. */
+export interface RiskBoardEntry {
+  county: CountyRef;
+  riskScore: number;
+  hazardType: HazardType;
+  action: CrisisDecision["action"];
+  topDriver: string | null;
+  sourcesLive: number;
+  sourcesTotal: number;
+  collectedAt: string;
+}
+
 export interface CountyRef {
   fips: string;
   name: string;
@@ -103,6 +167,12 @@ export interface OsintSnapshot {
   airQuality: AirQualitySummary | null;
   floodGauges: FloodGaugeReading[];
   activeDeclarations: DisasterDeclaration[];
+  // Optional all-hazards extensions (absent on snapshots collected before
+  // the corresponding feed existed — consumers must null-check).
+  earthquakes?: EarthquakeSignal[];
+  wildfires?: WildfireSignal[];
+  tropical?: TropicalSystem[];
+  hospitalCapacity?: HospitalCapacitySummary | null;
 }
 
 // ---------------------------------------------------------------------------

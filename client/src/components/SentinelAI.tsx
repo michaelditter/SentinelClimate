@@ -47,6 +47,7 @@ import TriggerOutreach from './TriggerOutreach';
 import SocialListening from './SocialListening';
 import WeatherSentinelMCP from './WeatherSentinelMCP';
 import LiveAgentAnalysis from './LiveAgentAnalysis';
+import RiskBoard from './RiskBoard';
 
 // Data and hooks
 import { resourceDeployments } from '@/data/geoData';
@@ -579,7 +580,10 @@ const SentinelAI: React.FC = () => {
 
             {/* Live OSINT multi-agent pipeline */}
             <LiveAgentAnalysis />
-            
+
+            {/* National rules-engine risk board */}
+            <RiskBoard />
+
             {/* Activity Feed and Quick Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-gray-800 p-6 rounded-lg shadow-lg">

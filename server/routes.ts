@@ -5,12 +5,19 @@ import { countyProfiles } from "./config/countyProfiles";
 import healthcarePredictions from "./utils/healthcarePredictions";
 import { calculateResourceDeployment, getCountyProfile, generateDeploymentScenario } from "./utils/resourceDeployment";
 import { registerIntelligenceRoutes } from "./routes/intelligence";
+import { registerCountySearchRoutes } from "./routes/countySearch";
+import { registerTrajectoryRoutes } from "./routes/trajectory";
+import { registerRiskboardRoutes } from "./routes/riskboard";
 import OpenAI from 'openai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
   // OSINT → multi-agent → allocation pipeline routes
   registerIntelligenceRoutes(app);
+  // National county autocomplete, 72h risk trajectory, national risk board
+  registerCountySearchRoutes(app);
+  registerTrajectoryRoutes(app);
+  registerRiskboardRoutes(app);
 
   // Live Operational Weather Data (Real NWS Integration)
   app.get("/api/weather-sentinel-operational", async (req, res) => {

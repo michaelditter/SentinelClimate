@@ -1,10 +1,13 @@
 import type {
   CountyRef,
   DisasterDeclaration,
+  EarthquakeSignal,
   FloodGaugeReading,
   HazardSignal,
   OsintSnapshot,
   SourceStatus,
+  TropicalSystem,
+  WildfireSignal,
 } from "../../shared/intelligence";
 import { errorMessage } from "./http";
 import {
@@ -17,6 +20,10 @@ import { USGS_SOURCE, fetchFloodGauges } from "./usgs";
 import { EIA_SOURCE, fetchGridSummary } from "./eia";
 import { AIRNOW_SOURCE, fetchAirQuality } from "./airnow";
 import { FEMA_SOURCE, fetchDisasterDeclarations } from "./fema";
+import { EARTHQUAKES_SOURCE, fetchEarthquakes } from "./earthquakes";
+import { WILDFIRES_SOURCE, fetchWildfires } from "./wildfires";
+import { TROPICAL_SOURCE, fetchTropicalSystems } from "./tropical";
+import { HHS_SOURCE, fetchHospitalCapacity } from "./hhs";
 
 const SOURCE_TIMEOUT_MS = 8000;
 
@@ -43,21 +50,35 @@ function unavailable(source: string, reason: unknown): SourceStatus {
 }
 
 /**
- * Collects the full OSINT picture for a county. All five sources run in
+ * Collects the full OSINT picture for a county. All ten feeds run in
  * parallel with a per-source timeout (NWS contributes two feeds — alerts and
  * forecast — each with its own SourceStatus). Never throws: the worst case is
  * a snapshot with empty arrays/nulls and every source marked unavailable.
  */
 export async function collectOsintSnapshot(county: CountyRef): Promise<OsintSnapshot> {
-  const [alertsResult, weatherResult, gaugesResult, gridResult, airResult, femaResult] =
-    await Promise.allSettled([
-      withTimeout((signal) => fetchActiveAlerts(county, signal)),
-      withTimeout((signal) => fetchWeatherSummary(county, signal)),
-      withTimeout((signal) => fetchFloodGauges(county, signal)),
-      withTimeout((signal) => fetchGridSummary(county, signal)),
-      withTimeout((signal) => fetchAirQuality(county, signal)),
-      withTimeout((signal) => fetchDisasterDeclarations(county, signal)),
-    ]);
+  const [
+    alertsResult,
+    weatherResult,
+    gaugesResult,
+    gridResult,
+    airResult,
+    femaResult,
+    quakeResult,
+    fireResult,
+    tropicalResult,
+    hospitalResult,
+  ] = await Promise.allSettled([
+    withTimeout((signal) => fetchActiveAlerts(county, signal)),
+    withTimeout((signal) => fetchWeatherSummary(county, signal)),
+    withTimeout((signal) => fetchFloodGauges(county, signal)),
+    withTimeout((signal) => fetchGridSummary(county, signal)),
+    withTimeout((signal) => fetchAirQuality(county, signal)),
+    withTimeout((signal) => fetchDisasterDeclarations(county, signal)),
+    withTimeout((signal) => fetchEarthquakes(county, signal)),
+    withTimeout((signal) => fetchWildfires(county, signal)),
+    withTimeout((signal) => fetchTropicalSystems(county, signal)),
+    withTimeout((signal) => fetchHospitalCapacity(county, signal)),
+  ]);
 
   const sources: SourceStatus[] = [];
 
@@ -109,6 +130,38 @@ export async function collectOsintSnapshot(county: CountyRef): Promise<OsintSnap
     sources.push(unavailable(FEMA_SOURCE, femaResult.reason));
   }
 
+  let earthquakes: EarthquakeSignal[] = [];
+  if (quakeResult.status === "fulfilled") {
+    earthquakes = quakeResult.value.earthquakes;
+    sources.push(quakeResult.value.status);
+  } else {
+    sources.push(unavailable(EARTHQUAKES_SOURCE, quakeResult.reason));
+  }
+
+  let wildfires: WildfireSignal[] = [];
+  if (fireResult.status === "fulfilled") {
+    wildfires = fireResult.value.wildfires;
+    sources.push(fireResult.value.status);
+  } else {
+    sources.push(unavailable(WILDFIRES_SOURCE, fireResult.reason));
+  }
+
+  let tropical: TropicalSystem[] = [];
+  if (tropicalResult.status === "fulfilled") {
+    tropical = tropicalResult.value.tropical;
+    sources.push(tropicalResult.value.status);
+  } else {
+    sources.push(unavailable(TROPICAL_SOURCE, tropicalResult.reason));
+  }
+
+  let hospitalCapacity: OsintSnapshot["hospitalCapacity"] = null;
+  if (hospitalResult.status === "fulfilled") {
+    hospitalCapacity = hospitalResult.value.capacity;
+    sources.push(hospitalResult.value.status);
+  } else {
+    sources.push(unavailable(HHS_SOURCE, hospitalResult.reason));
+  }
+
   return {
     county,
     collectedAt: new Date().toISOString(),
@@ -119,5 +172,9 @@ export async function collectOsintSnapshot(county: CountyRef): Promise<OsintSnap
     airQuality,
     floodGauges,
     activeDeclarations,
+    earthquakes,
+    wildfires,
+    tropical,
+    hospitalCapacity,
   };
 }

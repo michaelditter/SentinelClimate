@@ -38,6 +38,11 @@ const URGENCY_RANK: Record<HazardSignal["urgency"], number> = {
 
 const FLOOD_DISCHARGE_CFS = 10_000;
 const FLOOD_GAGE_HEIGHT_FT = 20;
+// Gage height alone is a local-datum value — reservoir pool gauges report
+// 90-180 ft with little or no discharge — so a high stage only counts as a
+// flood when substantial flow confirms it. (Proper fix: per-site NWS
+// flood-stage thresholds, not yet wired.)
+const FLOOD_GAGE_MIN_FLOW_CFS = 2_000;
 
 function worstActiveHazard(snapshot: OsintSnapshot): HazardSignal | undefined {
   let worst: HazardSignal | undefined;
@@ -62,12 +67,32 @@ function worstActiveHazard(snapshot: OsintSnapshot): HazardSignal | undefined {
 function triggeringFloodGauge(snapshot: OsintSnapshot) {
   return snapshot.floodGauges.find(
     (g) =>
+      // Strong absolute signal: high discharge (comparable across all sites).
       (g.dischargeCfs !== null && g.dischargeCfs > FLOOD_DISCHARGE_CFS) ||
-      (g.gageHeightFt !== null && g.gageHeightFt > FLOOD_GAGE_HEIGHT_FT),
+      // High stage, but only when real flow confirms it — filters out reservoir
+      // pool elevations that read high on a trickle.
+      (g.gageHeightFt !== null &&
+        g.gageHeightFt > FLOOD_GAGE_HEIGHT_FT &&
+        g.dischargeCfs !== null &&
+        g.dischargeCfs > FLOOD_GAGE_MIN_FLOW_CFS),
   );
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
+
+// Max age of a hospital-capacity reading (relative to snapshot collection)
+// for it to still amplify risk. The HHS feed is honestly labeled "degraded"
+// upstream when stale; this keeps a months-old number from silently inflating
+// a live score.
+const HOSPITAL_FRESHNESS_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isHospitalDataFresh(reportedAt: string | null, collectedAt: string): boolean {
+  if (!reportedAt) return false;
+  const reported = Date.parse(reportedAt);
+  const collected = Date.parse(collectedAt);
+  if (Number.isNaN(reported) || Number.isNaN(collected)) return false;
+  return collected - reported <= HOSPITAL_FRESHNESS_MS;
+}
 
 export function computeRiskScore(snapshot: OsintSnapshot): {
   riskScore: number;
@@ -158,6 +183,112 @@ export function computeRiskScore(snapshot: OsintSnapshot): {
     drivers.push(`Active federal declaration ${decl.id}: ${decl.title} (+10)`);
   }
 
+  // Earthquakes: largest qualifying event only (aftershock sequences must not
+  // stack points). Optional field — absent on older snapshots ⇒ contributes 0.
+  let quakePts = 0;
+  let quakeDriver: string | null = null;
+  for (const q of snapshot.earthquakes ?? []) {
+    if (q.magnitude === null || q.distanceKm === null || q.distanceKm > 100) continue;
+    let pts = 0;
+    if (q.magnitude >= 6) pts = 25;
+    else if (q.magnitude >= 5) pts = 15;
+    else if (q.magnitude >= 4.5) pts = 8;
+    if (pts > quakePts) {
+      quakePts = pts;
+      quakeDriver = `M${q.magnitude.toFixed(1)} earthquake ${Math.round(q.distanceKm)} km away (${q.place}) (+${pts})`;
+    }
+  }
+  if (quakePts > 0 && quakeDriver) {
+    score += quakePts;
+    drivers.push(quakeDriver);
+  }
+
+  // Wildfires: strongest single incident only. Data honesty: a null
+  // containmentPct is unknown, not "under 50%" — such fires score on acreage
+  // or proximity tiers only.
+  let firePts = 0;
+  let fireDriver: string | null = null;
+  for (const f of snapshot.wildfires ?? []) {
+    if (f.distanceKm === null || f.distanceKm > 150) continue;
+    let pts = 0;
+    if (
+      f.containmentPct !== null &&
+      f.containmentPct < 50 &&
+      f.acres !== null &&
+      f.acres >= 10_000
+    ) {
+      pts = 18;
+    } else if (f.acres !== null && f.acres >= 1_000) {
+      pts = 10;
+    } else if (f.distanceKm < 25) {
+      pts = 8;
+    }
+    if (pts > firePts) {
+      firePts = pts;
+      const bits: string[] = [];
+      if (f.acres !== null) bits.push(`${fmt(f.acres)} acres`);
+      bits.push(
+        f.containmentPct !== null
+          ? `${Math.round(f.containmentPct)}% contained`
+          : "containment not reported",
+      );
+      bits.push(`${Math.round(f.distanceKm)} km away`);
+      fireDriver = `Wildfire "${f.name}" — ${bits.join(", ")} (+${pts})`;
+    }
+  }
+  if (firePts > 0 && fireDriver) {
+    score += firePts;
+    drivers.push(fireDriver);
+  }
+
+  // Tropical systems: strongest single system only. Basin-rule storms beyond
+  // 1,000 km stay in the snapshot for awareness but score 0 here.
+  let tropicalPts = 0;
+  let tropicalDriver: string | null = null;
+  for (const t of snapshot.tropical ?? []) {
+    if (t.distanceKm === null) continue;
+    let pts = 0;
+    if (t.distanceKm <= 500) pts = 20;
+    else if (t.distanceKm <= 1000) pts = 10;
+    if (pts > tropicalPts) {
+      tropicalPts = pts;
+      tropicalDriver = `${t.classification} ${t.name} ${fmt(t.distanceKm)} km away${
+        t.intensityKt !== null ? `, ${Math.round(t.intensityKt)} kt` : ""
+      } (+${pts})`;
+    }
+  }
+  if (tropicalPts > 0 && tropicalDriver) {
+    score += tropicalPts;
+    drivers.push(tropicalDriver);
+  }
+
+  // Hospital strain is an AMPLIFIER: a strained healthcare system makes any
+  // hazard worse, but it is not itself a hazard — it adds points and never
+  // competes for hazardType.
+  const hosp = snapshot.hospitalCapacity;
+  const inpatientPct = hosp?.inpatientOccupancyPct ?? null;
+  const icuPct = hosp?.icuOccupancyPct ?? null;
+  // Staleness gate: the HHS federal hospital feed can lag by months/years.
+  // Only let occupancy amplify risk if the reading is recent relative to when
+  // this snapshot was collected (both timestamps live on the snapshot, so the
+  // function stays pure and deterministic — no clock read).
+  const hospFresh = isHospitalDataFresh(hosp?.reportedAt ?? null, snapshot.collectedAt);
+  let hospitalPts = 0;
+  if (hospFresh) {
+    if ((inpatientPct !== null && inpatientPct >= 90) || (icuPct !== null && icuPct >= 85)) {
+      hospitalPts = 12;
+    } else if ((inpatientPct !== null && inpatientPct >= 80) || (icuPct !== null && icuPct >= 75)) {
+      hospitalPts = 6;
+    }
+  }
+  if (hospitalPts > 0) {
+    score += hospitalPts;
+    const bits: string[] = [];
+    if (inpatientPct !== null) bits.push(`inpatient occupancy ${inpatientPct.toFixed(1)}%`);
+    if (icuPct !== null) bits.push(`ICU occupancy ${icuPct.toFixed(1)}%`);
+    drivers.push(`Hospital strain (state-level) — ${bits.join(", ")} (+${hospitalPts})`);
+  }
+
   const riskScore = Math.max(0, Math.min(100, Math.round(score)));
 
   // Pick the hazard type by strongest signal. An active alert competes with
@@ -173,6 +304,14 @@ export function computeRiskScore(snapshot: OsintSnapshot): {
     [gauge ? 15 : 0, "flood"],
     [gridPts, "grid_emergency"],
     [aqiPts, "air_quality"],
+    // HazardType has no earthquake member, so a dominant quake resolves to
+    // "other" (generic shelter/EMS demand rates) while its driver string keeps
+    // the specifics visible.
+    [quakePts, "other"],
+    [firePts, "wildfire"],
+    [tropicalPts, "hurricane"],
+    // hospitalPts is deliberately absent: strain amplifies the score but can
+    // never set the hazard type.
   ];
   // Prefer a typed hazard over "other" on ties; otherwise highest points win.
   candidates.sort(

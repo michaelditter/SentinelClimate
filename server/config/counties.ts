@@ -5,6 +5,7 @@
 
 import type { CountyRef } from "../../shared/intelligence";
 import { countyProfiles } from "./countyProfiles";
+import { nationalCounty, searchCounties } from "./nationalCounties";
 
 const harris = countyProfiles["48201"];
 const maricopa = countyProfiles["04013"];
@@ -92,19 +93,27 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Look up a county by exact FIPS code or by its distinctive name. */
+/**
+ * Look up a county by exact FIPS code or by its distinctive name.
+ *
+ * Resolution order:
+ *   1. Curated FIPS (hand-tuned entries win for their codes).
+ *   2. Curated name match (the six demo counties resolve without a FIPS).
+ *   3. National FIPS (any of ~3,144 US counties).
+ *   4. National name search (best single match, state-suffix aware).
+ */
 export function resolveCounty(idOrFips: string): CountyRef | undefined {
   const query = (idOrFips ?? "").trim().toLowerCase();
   if (!query) return undefined;
 
-  const byFips = COUNTIES.find((c) => c.fips === query);
-  if (byFips) return byFips;
+  const curatedByFips = COUNTIES.find((c) => c.fips === query);
+  if (curatedByFips) return curatedByFips;
 
   // Match the distinctive part of the name ("harris", "miami-dade") as a
   // whole word, so "harris", "Harris County", and "Harris County, TX" all
   // resolve — but the generic word "county" or a sentence that merely
   // mentions one does not silently pick the first registry entry.
-  return COUNTIES.find((c) => {
+  const curatedByName = COUNTIES.find((c) => {
     const base = c.name.toLowerCase().replace(/\s+county$/, "");
     if (!new RegExp(`(^|[^a-z])${escapeRe(base)}([^a-z]|$)`).test(query)) return false;
 
@@ -119,4 +128,12 @@ export function resolveCounty(idOrFips: string): CountyRef | undefined {
     }
     return true;
   });
+  if (curatedByName) return curatedByName;
+
+  // Fall through to the national registry: exact FIPS first, then the top
+  // ranked name match.
+  const nat = nationalCounty(query);
+  if (nat) return nat;
+
+  return searchCounties(query, 1)[0];
 }

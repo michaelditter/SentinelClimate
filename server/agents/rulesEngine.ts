@@ -20,7 +20,7 @@ export function riskLevelFor(riskScore: number): RiskLevel {
   return "emergency";
 }
 
-/** Fraction of OSINT sources reporting live (e.g. 3 of 6 live → 0.5). */
+/** Fraction of OSINT sources reporting live (e.g. 5 of 10 live → 0.5). */
 export function dataCompleteness(snapshot: OsintSnapshot): number {
   const total = snapshot.sources.length;
   if (total === 0) return 0;
@@ -98,6 +98,54 @@ function sentinelReport(
       `${snapshot.activeDeclarations.length} active federal declaration(s): ${snapshot.activeDeclarations
         .map((d) => `${d.id} ${d.incidentType}`)
         .join("; ")}`,
+    );
+  }
+  // All-hazards extensions (optional fields — absent on older snapshots).
+  for (const q of snapshot.earthquakes ?? []) {
+    const bits: string[] = [];
+    if (q.magnitude !== null) bits.push(`M${q.magnitude.toFixed(1)}`);
+    if (q.distanceKm !== null) bits.push(`${Math.round(q.distanceKm)} km from county center`);
+    if (q.depthKm !== null) bits.push(`depth ${Math.round(q.depthKm)} km`);
+    keyFindings.push(
+      `Earthquake ${q.place}${bits.length > 0 ? ` — ${bits.join(", ")}` : ""}${
+        q.occurredAt ? ` (${q.occurredAt})` : ""
+      }`,
+    );
+  }
+  for (const f of snapshot.wildfires ?? []) {
+    const bits: string[] = [];
+    if (f.acres !== null) bits.push(`${fmt(f.acres)} acres`);
+    bits.push(
+      f.containmentPct !== null
+        ? `${Math.round(f.containmentPct)}% contained`
+        : "containment not reported",
+    );
+    if (f.distanceKm !== null) bits.push(`${Math.round(f.distanceKm)} km from county center`);
+    keyFindings.push(`Active wildfire "${f.name}": ${bits.join(", ")}`);
+  }
+  for (const t of snapshot.tropical ?? []) {
+    const bits: string[] = [];
+    if (t.intensityKt !== null) bits.push(`${Math.round(t.intensityKt)} kt`);
+    if (t.distanceKm !== null) bits.push(`${fmt(t.distanceKm)} km from county center`);
+    if (t.movement) bits.push(`moving ${t.movement}`);
+    keyFindings.push(`${t.classification} ${t.name}${bits.length > 0 ? ` — ${bits.join(", ")}` : ""}`);
+  }
+  const hospital = snapshot.hospitalCapacity;
+  if (
+    hospital &&
+    (hospital.inpatientOccupancyPct !== null || hospital.icuOccupancyPct !== null)
+  ) {
+    const bits: string[] = [];
+    if (hospital.inpatientOccupancyPct !== null) {
+      bits.push(`inpatient ${hospital.inpatientOccupancyPct.toFixed(1)}%`);
+    }
+    if (hospital.icuOccupancyPct !== null) {
+      bits.push(`ICU ${hospital.icuOccupancyPct.toFixed(1)}%`);
+    }
+    keyFindings.push(
+      `State-level hospital occupancy: ${bits.join(", ")}${
+        hospital.reportedAt ? ` (reported ${hospital.reportedAt})` : ""
+      }`,
     );
   }
   // Data honesty: surface every degraded/unavailable feed explicitly.
@@ -200,6 +248,35 @@ function medicReport(
     );
   }
 
+  // Hospital strain (state-level HHS data) — cite the actual occupancy
+  // percentages; a system already near capacity has no headroom for a
+  // hazard-driven surge.
+  const hospital = snapshot.hospitalCapacity;
+  const inpatientPct = hospital?.inpatientOccupancyPct ?? null;
+  const icuPct = hospital?.icuOccupancyPct ?? null;
+  const occupancyBits: string[] = [];
+  if (inpatientPct !== null) occupancyBits.push(`inpatient occupancy ${inpatientPct.toFixed(1)}%`);
+  if (icuPct !== null) occupancyBits.push(`ICU occupancy ${icuPct.toFixed(1)}%`);
+  let hospitalNote = "";
+  if ((inpatientPct !== null && inpatientPct >= 90) || (icuPct !== null && icuPct >= 85)) {
+    keyFindings.push(
+      `Hospital capacity strained before any surge: ${occupancyBits.join(", ")} (state-level HHS data) — minimal headroom for hazard-driven admissions.`,
+    );
+    recommendations.push(
+      "Coordinate regional patient load-balancing through the healthcare coalition and confirm surge-bed activation triggers with hospital EDs.",
+    );
+    hospitalNote = ` Hospital strain: ${occupancyBits.join(", ")} (state-level).`;
+  } else if ((inpatientPct !== null && inpatientPct >= 80) || (icuPct !== null && icuPct >= 75)) {
+    keyFindings.push(
+      `Hospital occupancy elevated: ${occupancyBits.join(", ")} (state-level HHS data) — surge headroom is limited; monitor before committing hospital-bed allocations.`,
+    );
+    hospitalNote = ` Hospital occupancy elevated: ${occupancyBits.join(", ")} (state-level).`;
+  } else if (occupancyBits.length > 0) {
+    keyFindings.push(
+      `Hospital occupancy within normal range: ${occupancyBits.join(", ")} (state-level HHS data).`,
+    );
+  }
+
   keyFindings.push(
     `Vulnerable population at risk: ${fmt(county.vulnerablePopulation)} of ${fmt(county.population)} residents (seniors, chronic conditions, housing without AC).`,
   );
@@ -215,7 +292,7 @@ function medicReport(
       heatIndexF !== null && heatIndexF > 103
         ? `ED surge estimate +${Math.round((heatIndexF - 103) * 8)}% from heat index ${Math.round(heatIndexF)}°F.`
         : "No heat-driven ED surge threshold crossed."
-    }`,
+    }${hospitalNote}`,
     riskLevel,
     confidence,
     keyFindings,
@@ -238,6 +315,41 @@ function dispatcherReport(
     `Demand scale is set by ${fmt(county.vulnerablePopulation)} vulnerable residents (county population ${fmt(county.population)}).`,
     "Binding resource quantities come from the deterministic allocation engine (see the allocation block of this assessment / GET /api/allocation/plan/:county) — this desk summarizes what the risk level implies.",
   ];
+
+  // All-hazards resource implications — cite real snapshot numbers only.
+  const quakes = (snapshot.earthquakes ?? []).filter((q) => q.magnitude !== null);
+  if (quakes.length > 0) {
+    const strongest = quakes.reduce((a, b) => (b.magnitude! > a.magnitude! ? b : a));
+    keyFindings.push(
+      `Seismic activity: M${strongest.magnitude!.toFixed(1)} ${strongest.place}${
+        strongest.distanceKm !== null ? `, ${Math.round(strongest.distanceKm)} km from county center` : ""
+      } — implies urban search-and-rescue readiness, structural-triage teams, and shelter capacity for displaced residents.`,
+    );
+  }
+  const fires = snapshot.wildfires ?? [];
+  if (fires.length > 0) {
+    const nearest = fires.reduce((a, b) =>
+      (b.distanceKm ?? Infinity) < (a.distanceKm ?? Infinity) ? b : a,
+    );
+    keyFindings.push(
+      `${fires.length} active wildfire(s) in range — nearest "${nearest.name}"${
+        nearest.distanceKm !== null ? ` ${Math.round(nearest.distanceKm)} km away` : ""
+      }${nearest.acres !== null ? `, ${fmt(nearest.acres)} acres` : ""}${
+        nearest.containmentPct !== null ? `, ${Math.round(nearest.containmentPct)}% contained` : ""
+      } — implies evacuation shelters, respiratory-capable EMS surge, and clean-air center staging.`,
+    );
+  }
+  const storms = snapshot.tropical ?? [];
+  if (storms.length > 0) {
+    const nearest = storms.reduce((a, b) =>
+      (b.distanceKm ?? Infinity) < (a.distanceKm ?? Infinity) ? b : a,
+    );
+    keyFindings.push(
+      `${nearest.classification} ${nearest.name}${
+        nearest.distanceKm !== null ? ` ${fmt(nearest.distanceKm)} km from county center` : ""
+      }${nearest.intensityKt !== null ? ` at ${Math.round(nearest.intensityKt)} kt` : ""} — implies pre-landfall shelter staging, generators, potable water, and high-water vehicle positioning.`,
+    );
+  }
 
   const recommendations =
     riskScore >= 40

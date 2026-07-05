@@ -16,3 +16,6 @@ vite.config.ts.*
 attached_assets/
 .vercel
 server-dist
+
+# runtime state (watchlist persistence)
+.data/
