@@ -1,0 +1,16 @@
+# Sentinel Climate
+
+> Climate-emergency decision support. Sentinel watches public data feeds for disruption — extreme heat, flash floods, grid stress, dirty air, earthquakes, wildfires, tropical systems, hospital strain — scores the risk to a county, and drafts a resource-allocation plan (cooling centers, ambulances, high-water vehicles, medical teams) against that county's real inventory.
+
+It is support, not automation: every assessment ends with a recommendation a human emergency manager must review — `reviewRequired: true` is wired into the data model, not the marketing. The mission is timing — move the right resources toward the right place before the disaster peaks.
+
+Origin: June 2025 SCSP AI+ Expo hackathon build (1st Place, Anthropic track), hardened into a live tool against real government data feeds through July 2026. Built by Michael J Ditter.
+
+## Links
+
+- [Live app](https://sentinel-climate.vercel.app/): the decision-support dashboard
+- [Source code](https://github.com/michaelditter/SentinelClimate): public repository
+
+## The builder
+
+- [michaelditter.com](https://michaelditter.com): Michael J Ditter — Head of AI Strategy & Emerging Technology at Diageo

@@ -1,0 +1,58 @@
+# robots.txt — sentinel-climate.vercel.app
+
+# Content Signals (https://contentsignals.org):
+#   search   = build a search index and link to this content
+#   ai-input = use this content as input to AI answers (grounding / RAG)
+#   ai-train = use this content to train or fine-tune AI models
+# All three are welcome.
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+# Keep crawlers off the live data API (compute, not content)
+Disallow: /api/
+
+# Explicit allowances for AI/LLM crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /api/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+
+# LLM guidance file
+# https://sentinel-climate.vercel.app/llms.txt
+
+Sitemap: https://sentinel-climate.vercel.app/sitemap.xml
